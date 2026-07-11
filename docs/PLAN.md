@@ -112,15 +112,15 @@ For each provider:
 
 ## Part 6: Full integration, resilience, and history size
 
-- [ ] Remove all remaining fake/random logic from `/api/ai-move` — every active AI player now calls its real provider (via `config/models.json` lookup) with full history context
-- [ ] Confirm the opponent checkboxes correctly control which providers get called each round (unchecked opponents are never called)
-- [ ] Confirm parallel calls keep round latency reasonable even with all 4 active (use `asyncio.gather` on the backend if the provider SDK calls are async, or run them concurrently via a thread pool if not)
-- [ ] Simulate a provider outage (invalid API key) and confirm that player falls back to random moves instead of breaking the round
-- [ ] Simulate a rate-limit/quota-exhausted response individually for **each of the 4 providers** (not just one) and confirm each one independently falls back to random without crashing the round or affecting the other 3 providers — this matters because each provider has a small capped budget and running out mid-session is realistic, especially if the app sees real traffic
-- [ ] Play an extended session: multiple tournaments back to back, enough rounds that the accumulated history text grows substantial. Confirm requests don't blow past reasonable prompt-size or latency limits — if they do, trim to e.g. the last N tournaments' full detail plus a short summary line for older ones, and document the cutoff chosen in `AGENTS.md`
-- [ ] Confirm behavior when the human player is eliminated but AI players continue
-- [ ] Confirm behavior when only 1 opponent is checked
-- [ ] Edit `config/models.json` to a deliberately wrong model ID for one provider, confirm the app still runs and that player falls back to random — then revert the edit
+- [x] Remove all remaining fake/random logic from `/api/ai-move` — every active AI player now calls its real provider (via `config/models.json` lookup) with full history context
+- [x] Confirm the opponent checkboxes correctly control which providers get called each round (unchecked opponents are never called)
+- [x] Confirm parallel calls keep round latency reasonable even with all 4 active (use `asyncio.gather` on the backend if the provider SDK calls are async, or run them concurrently via a thread pool if not)
+- [x] Simulate a provider outage (invalid API key) and confirm that player falls back to random moves instead of breaking the round
+- [x] Simulate a rate-limit/quota-exhausted response individually for **each of the 4 providers** (not just one) and confirm each one independently falls back to random without crashing the round or affecting the other 3 providers — this matters because each provider has a small capped budget and running out mid-session is realistic, especially if the app sees real traffic
+- [x] Play an extended session: multiple tournaments back to back, enough rounds that the accumulated history text grows substantial. Confirm requests don't blow past reasonable prompt-size or latency limits — if they do, trim to e.g. the last N tournaments' full detail plus a short summary line for older ones, and document the cutoff chosen in `AGENTS.md`
+- [x] Confirm behavior when the human player is eliminated but AI players continue
+- [x] Confirm behavior when only 1 opponent is checked
+- [x] Edit `config/models.json` to a deliberately wrong model ID for one provider, confirm the app still runs and that player falls back to random — then revert the edit
 
 **Test:** deliberately break one provider's API key, replay a tournament, confirm it completes anyway. Separately, deliberately trigger a rate-limit/quota error for each of the 4 providers, one at a time, and confirm a complete tournament still finishes normally each time. Separately, play a long multi-tournament session and confirm response times stay reasonable throughout.
 **Success criteria:** a complete multi-tournament session runs end to end using only real API calls with full history context, no manual intervention, no crashes, no persistence surviving a reload, no runaway prompt growth, a model can be swapped by editing only `config/models.json`, and every one of the 4 providers has been individually verified to degrade gracefully to random on both a bad key and a rate-limit/quota failure.

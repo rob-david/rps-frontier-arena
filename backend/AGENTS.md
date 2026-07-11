@@ -4,3 +4,5 @@
 - Part 4: Added `POST /api/ai-move` with request/response validation, startup model-config lookup from `config/models.json`, and temporary random-choice response plumbing.
 - Part 5: Added provider wrappers (`openai_provider.py`, `anthropic_provider.py`, `xai_provider.py`, `google_provider.py`) with full-history prompts, normalization, per-provider rate-limit handling, request timeout, and catch-all random fallback.
 - Part 5: Wired `/api/ai-move` to dispatch by provider from `config/models.json`; endpoint still returns HTTP 200 with a valid choice even on provider failures.
+- Part 6: Validated per-provider resilience through `/api/ai-move` for invalid-key outages and simulated rate-limit errors (one provider at a time), confirming each target provider falls back without breaking other providers.
+- Part 6: Validated wrong-model-id config fallback by temporarily setting an invalid OpenAI model in `config/models.json`, confirming endpoint HTTP 200 + valid fallback choice, then restoring config.
