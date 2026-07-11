@@ -1,12 +1,51 @@
 import os
+import json
+import random
 from pathlib import Path
+from typing import Literal
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_OUT_DIR = BASE_DIR / "frontend" / "out"
 PLACEHOLDER_DIR = BASE_DIR / "backend" / "_placeholder_static"
+MODELS_CONFIG_PATH = BASE_DIR / "config" / "models.json"
+
+Choice = Literal["kamen", "nuzky", "papir"]
+AIPlayerId = Literal["sam", "claude", "elon", "sergey"]
+
+
+class AIPlayerConfig(BaseModel):
+  provider: str
+  model: str
+
+
+class AIMoveRequest(BaseModel):
+  player_id: AIPlayerId
+  active_players: list[str]
+  history: str
+
+
+class AIMoveResponse(BaseModel):
+  choice: Choice
+
+
+def _load_models_config() -> dict[str, AIPlayerConfig]:
+  with MODELS_CONFIG_PATH.open("r", encoding="utf-8") as handle:
+    raw = json.load(handle)
+
+  required = ["sam", "claude", "elon", "sergey"]
+  missing = [key for key in required if key not in raw]
+  if missing:
+    raise RuntimeError(f"Missing model config entries: {', '.join(missing)}")
+
+  return {key: AIPlayerConfig.model_validate(value) for key, value in raw.items()}
+
+
+MODEL_CONFIG = _load_models_config()
+RANDOM_CHOICES: tuple[Choice, Choice, Choice] = ("kamen", "nuzky", "papir")
 
 
 def _resolve_static_dir() -> Path:
@@ -36,6 +75,19 @@ def _resolve_static_dir() -> Path:
 
 
 app = FastAPI(title="RPS Frontier Arena")
+
+
+@app.post("/api/ai-move", response_model=AIMoveResponse)
+def ai_move(payload: AIMoveRequest) -> AIMoveResponse:
+  # Part 4: keep provider plumbing in place while still returning random choices.
+  if payload.player_id not in MODEL_CONFIG:
+    raise HTTPException(status_code=400, detail="Unknown player_id")
+
+  _config = MODEL_CONFIG[payload.player_id]
+  _ = _config.provider, _config.model, payload.active_players, payload.history
+  return AIMoveResponse(choice=random.choice(RANDOM_CHOICES))
+
+
 app.mount("/", StaticFiles(directory=str(_resolve_static_dir()), html=True), name="frontend")
 
 

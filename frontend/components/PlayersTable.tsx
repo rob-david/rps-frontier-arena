@@ -3,6 +3,7 @@ import { glyphs, labels, type Choice, type PlayerState } from "@/lib/game";
 interface PlayersTableProps {
   players: PlayerState[];
   selected: Choice | null;
+  isResolvingRound: boolean;
   gameOver: boolean;
   championId: string | null;
   onSelectChoice: (choice: Choice) => void;
@@ -51,6 +52,7 @@ function renderLiveCell(
 export default function PlayersTable({
   players,
   selected,
+  isResolvingRound,
   gameOver,
   championId,
   onSelectChoice,
@@ -58,7 +60,7 @@ export default function PlayersTable({
 }: PlayersTableProps) {
   const userPlayer = players.find((player) => player.id === "user");
   const userActive = Boolean(userPlayer?.active);
-  const playDisabled = gameOver ? false : userActive && !selected;
+  const playDisabled = gameOver ? false : isResolvingRound || (userActive && !selected);
 
   return (
     <div className="game-column">

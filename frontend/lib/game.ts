@@ -56,6 +56,10 @@ export interface RoundApplyOutput {
   champion: PlayerState | null;
 }
 
+interface AIMoveResponse {
+  choice: string;
+}
+
 export const glyphs: Record<Choice, string> = {
   kamen: "🪨",
   nuzky: "✂️",
@@ -139,6 +143,51 @@ export function resolveRound(choices: Record<string, Choice>): RoundResolution {
 export function pickRandomChoice(randomFn: () => number = Math.random): Choice {
   const options: Choice[] = ["kamen", "nuzky", "papir"];
   return options[Math.floor(randomFn() * 3)];
+}
+
+function isChoice(value: string): value is Choice {
+  return value === "kamen" || value === "nuzky" || value === "papir";
+}
+
+export async function fetchAIMoves(
+  activePlayers: PlayerState[],
+  historyText: string,
+): Promise<Record<OpponentId, Choice>> {
+  const aiPlayers = activePlayers.filter((player) => !player.human) as Array<
+    PlayerState & { id: OpponentId }
+  >;
+  const activePlayerIds = activePlayers.map((player) => player.id);
+
+  const pairs = await Promise.all(
+    aiPlayers.map(async (player) => {
+      try {
+        const response = await fetch("/api/ai-move", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            player_id: player.id,
+            active_players: activePlayerIds,
+            history: historyText,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = (await response.json()) as AIMoveResponse;
+        if (!isChoice(data.choice)) {
+          throw new Error("Invalid choice payload");
+        }
+
+        return [player.id, data.choice] as const;
+      } catch {
+        return [player.id, pickRandomChoice()] as const;
+      }
+    }),
+  );
+
+  return Object.fromEntries(pairs) as Record<OpponentId, Choice>;
 }
 
 export function applyRound(input: RoundApplyInput): RoundApplyOutput {

@@ -13,9 +13,9 @@ import {
   createInitialScores,
   createTournamentPlayers,
   DEFAULT_CHECKED_OPPONENTS,
+  fetchAIMoves,
   getFullSessionHistoryText,
   OPPONENT_IDS,
-  pickRandomChoice,
   type CheckedOpponents,
   type Choice,
   type OpponentId,
@@ -42,6 +42,7 @@ export default function Home() {
   const [tournamentNum, setTournamentNum] = useState(1);
   const [roundNum, setRoundNum] = useState(0);
   const [selected, setSelected] = useState<Choice | null>(null);
+  const [isResolvingRound, setIsResolvingRound] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [champion, setChampion] = useState<PlayerState | null>(null);
   const [scores, setScores] = useState(createInitialScores);
@@ -82,7 +83,11 @@ export default function Home() {
     initTournament(nextCheckedOpponents);
   };
 
-  const handlePlayRound = () => {
+  const handlePlayRound = async () => {
+    if (isResolvingRound) {
+      return;
+    }
+
     if (gameOver) {
       initTournament(checkedOpponents);
       return;
@@ -94,30 +99,38 @@ export default function Home() {
       return;
     }
 
-    const choices: Record<string, Choice> = {};
-    activePlayers.forEach((player) => {
-      if (player.human) {
-        choices[player.id] = selected as Choice;
-      } else {
-        choices[player.id] = pickRandomChoice();
-      }
-    });
+    setIsResolvingRound(true);
+    try {
+      const choices: Record<string, Choice> = {};
+      const historyText = getFullSessionHistoryText(history);
+      const aiChoices = await fetchAIMoves(activePlayers, historyText);
 
-    const nextRoundNum = roundNum + 1;
-    const output = applyRound({
-      players,
-      scores,
-      choices,
-      roundNumber: nextRoundNum,
-    });
+      activePlayers.forEach((player) => {
+        if (player.human) {
+          choices[player.id] = selected as Choice;
+        } else {
+          choices[player.id] = aiChoices[player.id as OpponentId];
+        }
+      });
 
-    setRoundNum(nextRoundNum);
-    setPlayers(output.players);
-    setScores(output.scores);
-    setHistory((prevHistory) => appendRound(prevHistory, output.roundRecord));
-    setGameOver(output.gameOver);
-    setChampion(output.champion);
-    setSelected(null);
+      const nextRoundNum = roundNum + 1;
+      const output = applyRound({
+        players,
+        scores,
+        choices,
+        roundNumber: nextRoundNum,
+      });
+
+      setRoundNum(nextRoundNum);
+      setPlayers(output.players);
+      setScores(output.scores);
+      setHistory((prevHistory) => appendRound(prevHistory, output.roundRecord));
+      setGameOver(output.gameOver);
+      setChampion(output.champion);
+      setSelected(null);
+    } finally {
+      setIsResolvingRound(false);
+    }
   };
 
   const activeCount = players.filter((player) => player.active).length;
@@ -158,6 +171,7 @@ export default function Home() {
         <PlayersTable
           players={players}
           selected={selected}
+          isResolvingRound={isResolvingRound}
           gameOver={gameOver}
           championId={champion?.id ?? null}
           onSelectChoice={setSelected}

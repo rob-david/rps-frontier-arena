@@ -76,12 +76,12 @@ This is a faithful React port, not a redesign — see `AGENTS.md` "Starting Poin
 
 ## Part 4: Backend AI-move endpoint skeleton (still fake)
 
-- [ ] Add `POST /api/ai-move` to `backend/main.py` (or a `backend/routes.py` it includes), using the exact request/response shape defined in `AGENTS.md` under "API Contract" — a Pydantic model for the request (`player_id`, `active_players`, `history`) and for the response (`choice`)
-- [ ] The route reads `config/models.json` to know which provider a given `player_id` maps to, but for now still returns a random choice regardless — ignore `history` content at this stage, just wire the plumbing and the config lookup
-- [ ] Before wiring the frontend to it, smoke-test `/api/ai-move` in isolation with a plain `curl` (or equivalent) request and confirm the response matches the API Contract exactly — this isolates "does the backend endpoint work at all" from "does the whole game work", so a failure here is easy to tell apart from a frontend bug later
-- [ ] Update `frontend/lib/game.ts` (or wherever the AI-move logic lives) so it calls this endpoint via `fetch('/api/ai-move', ...)` (once per active AI player, in parallel with `Promise.all`) instead of calling `Math.random()` locally. Leave everything else about the game logic and UI untouched
-- [ ] Rebuild the static export (`npm run build`) after this change and re-verify through FastAPI
-- [ ] Confirm the backend does not persist or cache anything it receives between requests
+- [x] Add `POST /api/ai-move` to `backend/main.py` (or a `backend/routes.py` it includes), using the exact request/response shape defined in `AGENTS.md` under "API Contract" — a Pydantic model for the request (`player_id`, `active_players`, `history`) and for the response (`choice`)
+- [x] The route reads `config/models.json` to know which provider a given `player_id` maps to, but for now still returns a random choice regardless — ignore `history` content at this stage, just wire the plumbing and the config lookup
+- [x] Before wiring the frontend to it, smoke-test `/api/ai-move` in isolation with a plain `curl` (or equivalent) request and confirm the response matches the API Contract exactly — this isolates "does the backend endpoint work at all" from "does the whole game work", so a failure here is easy to tell apart from a frontend bug later
+- [x] Update `frontend/lib/game.ts` (or wherever the AI-move logic lives) so it calls this endpoint via `fetch('/api/ai-move', ...)` (once per active AI player, in parallel with `Promise.all`) instead of calling `Math.random()` locally. Leave everything else about the game logic and UI untouched
+- [x] Rebuild the static export (`npm run build`) after this change and re-verify through FastAPI
+- [x] Confirm the backend does not persist or cache anything it receives between requests
 
 **Test:** first, the standalone `curl` smoke test above should succeed on its own. Then play across two tournaments; moves still come from the backend but are effectively random. Confirm the network tab shows real requests to `/api/ai-move` matching the documented contract exactly, each carrying the growing history text. Add an artificial 300ms delay to confirm the waiting "?" state renders correctly during the round-trip.
 **Success criteria:** the isolated `curl` smoke test succeeds; round-trip frontend -> backend -> frontend works reliably and matches the API Contract exactly; backend is verifiably stateless; the rest of the app is unchanged from Part 3.
