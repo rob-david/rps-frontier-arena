@@ -18,8 +18,8 @@ COPY config/ ./config/
 COPY --from=frontend-build /app/frontend/out ./frontend/out
 
 ENV PATH="/app/.venv/bin:${PATH}"
-ENV PORT=8000
+ENV PORT=7860
 
-EXPOSE 8000
+EXPOSE 7860
 
-CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-7860}"]

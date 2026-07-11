@@ -2,7 +2,7 @@
 
 A tournament arena where you play Rock/Paper/Scissors against four real frontier LLMs — GPT-5.4, Claude Sonnet 5, Grok 4.3, and Gemini 3.1 Pro — each with full memory of everything that's happened in the session, so they can actually adapt their strategy round by round.
 
-**[Live demo →](#)** *(link added after deployment)*
+**[Live demo →](https://huggingface.co/spaces/robertino1972/rps-frontier-arena)**
 
 ![Frontier Arena screenshot](./assets/screenshot.png)
 
@@ -31,7 +31,7 @@ This repo is as much a demonstration of **how** it was built as **what** was bui
 | Backend | Python, FastAPI |
 | Package management | `uv` (Python), npm (Node) |
 | AI providers | OpenAI, Anthropic, xAI, Google — official SDKs |
-| Deployment | Docker |
+| Deployment | Docker, Hugging Face Spaces |
 
 No database. No user accounts. Everything lives in the browser's session state and resets on reload — by design, not by omission (see [`AGENTS.md`](./AGENTS.md) for why).
 
