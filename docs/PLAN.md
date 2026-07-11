@@ -144,11 +144,11 @@ For each provider:
 
 This mirrors the original template's scope: the app gets packaged into a Docker container as the last piece of polish, run and verified locally. Where (or whether) this gets hosted anywhere public is a separate decision, made later, outside this plan — this step does not deploy anywhere.
 
-- [ ] Write a **multi-stage** `Dockerfile` at the project root:
+- [x] Write a **multi-stage** `Dockerfile` at the project root:
   - Stage 1 (Node): install frontend dependencies (`npm install`) and build the static export (`npm run build`), producing `frontend/out/`
   - Stage 2 (Python): install dependencies via `uv sync`, copy in `backend/`, `config/`, and the built `frontend/out/` from Stage 1, expose the configured port, run via `uvicorn`
-- [ ] Build and run the Docker image locally, confirm the app works identically to the non-Docker local run (using a local `.env` mounted or passed with `--env-file`)
-- [ ] Play a full multi-tournament session against the containerized app end to end
+- [x] Build and run the Docker image locally, confirm the app works identically to the non-Docker local run (using a local `.env` mounted or passed with `--env-file`)
+- [x] Play a full multi-tournament session against the containerized app end to end
 
 **Test:** a multi-tournament session against real AI opponents works identically running inside the Docker container as it did outside it, including history persisting across tournaments and resetting only on reload.
 **Success criteria:** the Docker image builds and runs cleanly from a fresh clone (given a filled-in `.env`); the containerized app is visually and behaviorally identical to `docs/index.html`; no secrets are baked into the image itself (they're passed in at runtime via `.env`/`--env-file`).

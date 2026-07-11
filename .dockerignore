@@ -1,0 +1,15 @@
+.git
+.gitignore
+.env
+.venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+assets/
+docs/
+memories/

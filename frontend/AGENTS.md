@@ -6,3 +6,4 @@
 - Part 4: Replaced local AI random move generation with parallel `fetch('/api/ai-move')` calls and kept round resolution logic unchanged.
 - Part 6: Re-verified opponent-checkbox routing in browser automation: when only one opponent is checked, only that provider is called each round.
 - Part 6: Re-verified user-eliminated flow and long-session behavior: AI rounds continue after user elimination, and session history growth across many tournaments remains responsive without adding a history cutoff.
+- Part 8: Verified containerized app UI/gameplay on `http://localhost:8001` including multi-tournament history persistence and reset-on-reload behavior.

@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 from typing import Literal
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -19,6 +20,8 @@ FRONTEND_OUT_DIR = BASE_DIR / "frontend" / "out"
 PLACEHOLDER_DIR = BASE_DIR / "backend" / "_placeholder_static"
 MODELS_CONFIG_PATH = BASE_DIR / "config" / "models.json"
 LOGGER = logging.getLogger(__name__)
+
+load_dotenv(BASE_DIR / ".env")
 
 Choice = Literal["kamen", "nuzky", "papir"]
 AIPlayerId = Literal["sam", "claude", "elon", "sergey"]
