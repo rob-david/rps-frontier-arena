@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rock, Paper, Scissors — Tournament</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root{
+    --bg: #12142B;
+    --bg-panel: #1B1E3F;
+    --bg-panel-2: #20244A;
+
+    --player: #46E0D0;  --player-dim: #2A5C58;
+    --sam: #FF5C8A;      --sam-dim: #6B2F45;
+    --claude: #FFB454;   --claude-dim: #7A5A2E;
+    --elon: #9B7CFF;     --elon-dim: #4E3F7A;
+    --sergey-1:#4C8DFF; --sergey-2:#EA4335; --sergey-3:#FBBC05; --sergey-4:#34A853; --sergey-dim:#2E4A7A;
+
+    --text: #F2F1F8;
+    --muted: #8A8DBE;
+    --line: rgba(242,241,248,0.08);
+    --eliminated: #FF5C6E;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  body{
+    background:
+      radial-gradient(circle at 10% 10%, rgba(70,224,208,0.06), transparent 35%),
+      radial-gradient(circle at 90% 10%, rgba(255,92,138,0.06), transparent 35%),
+      radial-gradient(circle at 30% 95%, rgba(155,124,255,0.06), transparent 38%),
+      radial-gradient(circle at 75% 95%, rgba(76,141,255,0.06), transparent 38%),
+      var(--bg);
+    min-height:100vh;
+    font-family:'Inter', sans-serif;
+    color:var(--text);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:14px 12px;
+  }
+
+  .app{ width:100%; max-width:1320px; }
+
+  header{ text-align:center; margin-bottom:10px; }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px; letter-spacing:0.2em; color:var(--muted);
+    text-transform:uppercase; margin-bottom:3px;
+  }
+  h1{
+    font-family:'Chakra Petch', sans-serif; font-weight:700;
+    font-size:clamp(20px, 4vw, 30px); letter-spacing:-0.01em;
+  }
+  h1 span.accent{ color:var(--player); }
+
+  .status-bar{
+    margin-top:8px;
+    display:inline-flex; align-items:center; gap:10px;
+    background:var(--bg-panel); border:1px solid var(--line);
+    border-radius:999px; padding:9px 20px;
+    font-family:'JetBrains Mono', monospace; font-size:12.5px; color:var(--muted);
+  }
+  .status-bar b{ color:var(--text); font-weight:500; }
+  .status-bar .champ-tag{ color:var(--claude); }
+
+  /* SCOREBOARD */
+  .scoreboard-panel{
+    max-width:900px; margin:8px auto 0; text-align:center;
+  }
+  .scoreboard-title{
+    font-family:'Chakra Petch', sans-serif; font-weight:600; font-size:12px;
+    letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:4px;
+  }
+  .scoreboard-row{
+    display:inline-flex; align-items:center; gap:0; flex-wrap:wrap; justify-content:center;
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:16px; padding:6px 8px;
+  }
+  .score-chip{
+    display:flex; align-items:center; gap:8px; padding:8px 18px;
+  }
+  .score-chip .sc-name{
+    font-family:'Chakra Petch', sans-serif; font-weight:600; font-size:13px;
+  }
+  .score-chip .sc-num{
+    font-family:'JetBrains Mono', monospace; font-weight:500; font-size:17px; color:var(--text);
+  }
+  .score-sep{ width:1px; height:22px; background:var(--line); }
+  .score-chip.user .sc-name{ color:var(--player); }
+  .score-chip.sam .sc-name{ color:var(--sam); }
+  .score-chip.claude .sc-name{ color:var(--claude); }
+  .score-chip.elon .sc-name{ color:var(--elon); }
+  .score-chip.sergey .sc-name{
+    background:linear-gradient(90deg, var(--sergey-1), var(--sergey-2), var(--sergey-3), var(--sergey-4));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+
+  /* OPPONENTS PANEL */
+  .opponents-panel{
+    max-width:640px; margin:8px auto 0; background:var(--bg-panel);
+    border:1px solid var(--line); border-radius:18px; padding:8px 22px; text-align:center;
+  }
+  .opponents-title{
+    font-family:'Chakra Petch', sans-serif; font-weight:600; font-size:12px;
+    letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:4px;
+  }
+  .opponents-list{
+    display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-bottom:4px;
+  }
+  .opp-toggle{
+    display:flex; align-items:center; gap:8px; padding:8px 14px;
+    background:var(--bg-panel-2); border:1.5px solid var(--line); border-radius:999px;
+    cursor:pointer; user-select:none; transition:all 0.15s ease;
+  }
+  .opp-toggle input{ display:none; }
+  .opp-toggle .box{
+    width:15px; height:15px; border-radius:4px; border:1.5px solid var(--muted);
+    display:flex; align-items:center; justify-content:center; font-size:10px; color:transparent;
+    flex-shrink:0; transition:all 0.15s ease;
+  }
+  .opp-toggle .lbl{
+    font-family:'Chakra Petch', sans-serif; font-weight:600; font-size:13px; color:var(--muted);
+  }
+  .opp-toggle.checked .box{ color:var(--bg); }
+  .opp-toggle.sam.checked{ border-color:var(--sam); } .opp-toggle.sam.checked .box{ background:var(--sam); border-color:var(--sam); } .opp-toggle.sam.checked .lbl{ color:var(--sam); }
+  .opp-toggle.claude.checked{ border-color:var(--claude); } .opp-toggle.claude.checked .box{ background:var(--claude); border-color:var(--claude); } .opp-toggle.claude.checked .lbl{ color:var(--claude); }
+  .opp-toggle.elon.checked{ border-color:var(--elon); } .opp-toggle.elon.checked .box{ background:var(--elon); border-color:var(--elon); } .opp-toggle.elon.checked .lbl{ color:var(--elon); }
+  .opp-toggle.sergey.checked{ border-color:var(--sergey-1); } .opp-toggle.sergey.checked .box{ background:var(--sergey-1); border-color:var(--sergey-1); } .opp-toggle.sergey.checked .lbl{ color:var(--sergey-1); }
+  .opponents-hint{
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--muted); opacity:0.7;
+  }
+
+  .divider-rule{
+    max-width:960px; margin:8px auto; height:1px;
+    background:linear-gradient(90deg, transparent, var(--line) 15%, var(--line) 85%, transparent);
+  }
+
+  /* MAIN TABLE: players grid + history panel */
+  .table{
+    display:grid;
+    grid-template-columns: 1fr 360px;
+    gap:14px;
+    align-items:start;
+  }
+
+  .players-grid{
+    display:grid;
+    gap:6px;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:12px 12px;
+    grid-auto-rows:min-content;
+  }
+
+  /* header cells */
+  .head-cell{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    text-align:center; border-radius:12px; padding:6px 6px; min-height:44px;
+  }
+  .head-cell.player{background:linear-gradient(180deg, rgba(70,224,208,0.08), transparent 65%);}
+  .head-cell.sam{background:linear-gradient(180deg, rgba(255,92,138,0.08), transparent 65%);}
+  .head-cell.claude{background:linear-gradient(180deg, rgba(255,180,84,0.08), transparent 65%);}
+  .head-cell.elon{background:linear-gradient(180deg, rgba(155,124,255,0.08), transparent 65%);}
+  .head-cell.sergey{background:linear-gradient(180deg, rgba(76,141,255,0.08), transparent 65%);}
+  .head-cell.eliminated{ opacity:0.35; }
+
+  .head-cell.player .side-name{color:var(--player);}
+  .head-cell.sam .side-name{color:var(--sam);}
+  .head-cell.claude .side-name{color:var(--claude);}
+  .head-cell.elon .side-name{color:var(--elon);}
+  .head-cell.sergey .side-name{
+    background:linear-gradient(90deg, var(--sergey-1), var(--sergey-2), var(--sergey-3), var(--sergey-4));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .head-cell.sergey .side-name .dot{background:var(--sergey-1);}
+
+  /* row cell (live row only now) */
+  .row-cell{
+    display:flex; align-items:center; justify-content:center;
+    background:var(--bg-panel-2); border:1px solid var(--line); border-radius:12px;
+    padding:8px 4px; min-height:52px; position:relative;
+  }
+  .live-cell{ border-color:rgba(70,224,208,0.25); background:rgba(70,224,208,0.03); }
+
+  .mini-choices{ display:flex; gap:6px; }
+  .choice-mini{
+    width:34px; height:34px; border-radius:9px; background:var(--bg-panel-2);
+    border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center;
+    font-size:16px; cursor:pointer; transition:all 0.15s ease; user-select:none;
+  }
+  .choice-mini:hover{ border-color:var(--player-dim); transform:translateY(-1px); }
+  .choice-mini.selected{
+    background:linear-gradient(135deg, rgba(70,224,208,0.32), rgba(70,224,208,0.08));
+    border-color:var(--player); box-shadow:0 0 0 2px rgba(70,224,208,0.22);
+    transform:scale(1.08);
+  }
+
+  .mini-badge{
+    width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    font-size:16px;
+  }
+  .mini-badge.dash{ color:var(--muted); font-size:13px; }
+  .mini-badge.wait{ color:var(--muted); opacity:0.55; font-size:15px; border:1.5px dashed var(--line); }
+  .mini-badge.champ{ font-size:19px; }
+
+  .side-name{
+    font-family:'Chakra Petch', sans-serif; font-weight:600; font-size:14px;
+    display:flex; align-items:center; gap:5px;
+  }
+  .side-name .dot{width:6px; height:6px; border-radius:50%; background:currentColor;}
+  .side-name .x-mark{ color:var(--eliminated); font-size:12px; font-weight:700; }
+  .side-powered{
+    font-family:'JetBrains Mono', monospace; font-size:9px; color:var(--muted);
+    display:flex; flex-direction:column; align-items:center; gap:1px; text-align:center; line-height:1.25;
+    text-transform:uppercase; letter-spacing:0.03em;
+  }
+  .side-powered .model-name{
+    font-family:'Chakra Petch', sans-serif; font-weight:600; font-size:11px;
+    color:var(--text); text-transform:none; letter-spacing:0;
+  }
+
+  /* HISTORY PANEL */
+  .history-panel{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:20px;
+    padding:20px 18px; display:flex; flex-direction:column;
+    height:460px;
+  }
+  .history-title{
+    font-family:'Chakra Petch', sans-serif; font-weight:600; font-size:13px;
+    letter-spacing:0.08em; text-transform:uppercase; color:var(--muted);
+    margin-bottom:12px; flex-shrink:0;
+  }
+  .history-feed{
+    flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:16px; padding-right:4px;
+  }
+  .history-feed::-webkit-scrollbar{ width:6px; }
+  .history-feed::-webkit-scrollbar-thumb{ background:var(--bg-panel-2); border-radius:4px; }
+
+  .tournament-heading{
+    font-family:'Chakra Petch', sans-serif; font-weight:600; font-size:13px;
+    color:var(--player); border-bottom:1px solid var(--line); padding-bottom:8px; margin-bottom:2px;
+  }
+
+  .round-block{
+    font-family:'JetBrains Mono', monospace; font-size:12px; line-height:1.7; color:var(--text);
+    background:var(--bg-panel-2); border:1px solid var(--line); border-radius:12px; padding:12px 14px;
+  }
+  .round-block .round-title{
+    font-family:'Chakra Petch', sans-serif; font-weight:600; font-size:12.5px;
+    color:var(--muted); margin-bottom:6px; letter-spacing:0.04em;
+  }
+  .round-block .sel-line .name{ color:var(--muted); }
+  .round-block .elim-line{ color:var(--eliminated); margin-top:6px; display:block; }
+  .round-block .tie-line{ color:#FBBC05; margin-top:6px; display:block; }
+  .round-block .remain-line{ color:var(--player); margin-top:6px; display:block; }
+  .round-block .champ-line{
+    color:var(--claude); margin-top:6px; display:block; font-family:'Chakra Petch', sans-serif;
+    font-weight:600; font-size:13px;
+  }
+  .game-column{ display:flex; flex-direction:column; }
+  .cta-wrap{ display:flex; justify-content:center; margin-top:12px; }
+  .cta{
+    font-family:'Chakra Petch', sans-serif; font-weight:600; font-size:16px; letter-spacing:0.02em;
+    color:var(--bg); background:linear-gradient(135deg, var(--player), #6FE8C6);
+    border:none; padding:11px 40px; border-radius:14px; cursor:pointer;
+    box-shadow:0 12px 30px -10px rgba(70,224,208,0.55); transition:transform 0.15s ease;
+  }
+  .cta:active{ transform:scale(0.97); }
+  .cta:disabled{ background:var(--bg-panel-2); color:var(--muted); box-shadow:none; cursor:not-allowed; }
+  .cta.champion-btn{ background:linear-gradient(135deg, var(--claude), #FFD79A); box-shadow:0 12px 30px -10px rgba(255,180,84,0.55); }
+
+  footer.note{
+    text-align:center; margin-top:10px; font-family:'JetBrains Mono', monospace;
+    font-size:11px; color:var(--muted); opacity:0.6;
+  }
+
+  @media (max-width:980px){
+    .table{ grid-template-columns:1fr; }
+    .history-panel{ height:340px; }
+  }
+
+  @media (max-width:900px){
+    .players-grid{ gap:6px; padding:18px 8px; }
+    .side-powered{ font-size:7px; gap:1px; }
+    .side-powered .model-name{ font-size:9px; }
+    .side-name{ font-size:12px; }
+    .choice-mini, .mini-badge{ width:28px; height:28px; font-size:14px; }
+    .mini-badge.champ{ font-size:16px; }
+    .mini-choices{ gap:4px; }
+    .row-cell{ min-height:44px; padding:6px 3px; }
+  }
+
+  @media (max-width:520px){
+    .side-name span:not(.dot){ font-size:10px; }
+    .side-powered{ font-size:6px; line-height:1.15; flex-direction:column; gap:1px; }
+    .side-powered .model-name{ font-size:7.5px; white-space:normal; }
+    .players-grid{ padding:16px 5px; gap:5px; }
+    .choice-mini, .mini-badge{ width:24px; height:24px; font-size:12px; border-radius:7px; }
+    .mini-badge.champ{ font-size:14px; }
+    .mini-choices{ gap:3px; }
+    .head-cell{ padding:8px 3px; min-height:50px; }
+    .row-cell{ min-height:38px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="eyebrow">Frontier Arena · 1 player, 4 AI</div>
+    <h1>Rock, Paper, <span class="accent">Scissors</span></h1>
+    <div class="status-bar" id="statusBar"></div>
+  </header>
+
+  <div class="scoreboard-panel">
+    <div class="scoreboard-title">Scoreboard</div>
+    <div class="scoreboard-row" id="scoreboardRow"></div>
+  </div>
+
+  <div class="divider-rule"></div>
+
+  <div class="opponents-panel">
+    <div class="opponents-title">Opponents</div>
+    <div class="opponents-list" id="opponentsList"></div>
+    <div class="opponents-hint">Fewer opponents = fewer ties. Pick who plays today.</div>
+  </div>
+
+  <div class="divider-rule"></div>
+
+  <div class="table">
+    <div class="game-column">
+      <div class="players-grid" id="playersGrid"></div>
+
+      <div class="cta-wrap">
+        <button class="cta" id="playBtn">Play Round</button>
+      </div>
+    </div>
+
+    <div class="history-panel">
+      <div class="history-title">Tournament History</div>
+      <div class="history-feed" id="historyFeed"></div>
+    </div>
+  </div>
+
+  <footer class="note">Powered by Claude &amp; GitHub Copilot · July 2026</footer>
+</div>
+
+<script>
+  const glyphs = {kamen:'🪨', nuzky:'✂️', papir:'📄'};
+  const labels = {kamen:'Rock', nuzky:'Scissors', papir:'Paper'};
+
+  const PLAYER_DEFS = [
+    {id:'user', name:'You', provider:null, model:null, human:true},
+    {id:'sam', name:'Sam', provider:'OpenAI', model:'GPT-5.4'},
+    {id:'claude', name:'Claude', provider:'Anthropic', model:'Claude Sonnet 5'},
+    {id:'elon', name:'Elon', provider:'xAI', model:'Grok 4.3'},
+    {id:'sergey', name:'Sergey', provider:'Google', model:'Gemini 3.1 Pro'}
+  ];
+  const OPPONENT_IDS = ['sam','claude','elon','sergey'];
+  let checkedOpponents = {sam:true, claude:true, elon:true, sergey:true};
+
+  function renderOpponentsPanel(){
+    const list = document.getElementById('opponentsList');
+    list.innerHTML = OPPONENT_IDS.map(id => {
+      const def = PLAYER_DEFS.find(p => p.id === id);
+      const isChecked = checkedOpponents[id];
+      return `<label class="opp-toggle ${id}${isChecked ? ' checked':''}" data-id="${id}">
+        <input type="checkbox" ${isChecked ? 'checked':''}>
+        <span class="box">${isChecked ? '✓' : ''}</span>
+        <span class="lbl">${def.name}</span>
+      </label>`;
+    }).join('');
+
+    list.querySelectorAll('.opp-toggle').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        const id = el.dataset.id;
+        const activeCount = OPPONENT_IDS.filter(o => checkedOpponents[o]).length;
+        if(checkedOpponents[id] && activeCount <= 1) return; // keep at least 1 opponent
+        checkedOpponents[id] = !checkedOpponents[id];
+        renderOpponentsPanel();
+        initTournament();
+      });
+    });
+  }
+
+  function currentPlayerDefs(){
+    return PLAYER_DEFS.filter(p => p.human || checkedOpponents[p.id]);
+  }
+
+  let players, tournamentNum, roundNum, selected, gameOver, champion;
+  let scores = {user:0, sam:0, claude:0, elon:0, sergey:0};
+
+  function renderScoreboard(){
+    const row = document.getElementById('scoreboardRow');
+    const visible = PLAYER_DEFS.filter(p => p.human || checkedOpponents[p.id]);
+    row.innerHTML = visible.map((p, i) => {
+      const sep = i > 0 ? '<div class="score-sep"></div>' : '';
+      const name = p.human ? 'You' : p.name;
+      return `${sep}<div class="score-chip ${p.id}">
+        <span class="sc-name">${name}</span><span class="sc-num">${scores[p.id]}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function initTournament(){
+    players = currentPlayerDefs().map(p => ({...p, active:true}));
+    tournamentNum = (tournamentNum || 0) + 1;
+    roundNum = 0;
+    selected = null;
+    gameOver = false;
+    champion = null;
+
+    // New tournament heading goes on top, but everything already in the feed
+    // (all previous tournaments, all their rounds) stays exactly where it is.
+    // Only a full page reload clears this — see getFullSessionHistoryText().
+    const feed = document.getElementById('historyFeed');
+    const heading = document.createElement('div');
+    heading.className = 'tournament-heading';
+    heading.textContent = `Tournament #${tournamentNum}`;
+    feed.insertBefore(heading, feed.firstChild || null);
+
+    document.getElementById('playersGrid').style.gridTemplateColumns = `repeat(${players.length}, 1fr)`;
+    renderAll();
+  }
+
+  function beats(a,b){
+    return (a==='kamen'&&b==='nuzky') || (a==='nuzky'&&b==='papir') || (a==='papir'&&b==='kamen');
+  }
+
+  function resolveRound(choices){
+    const types = Object.values(choices);
+    const unique = [...new Set(types)];
+    if(unique.length === 1) return {tie:true};
+    if(unique.length === 2){
+      const [a,b] = unique;
+      const winnerType = beats(a,b) ? a : b;
+      const eliminatedIds = Object.keys(choices).filter(id => choices[id] !== winnerType);
+      return {tie:false, eliminatedIds};
+    }
+    const counts = {};
+    types.forEach(t => counts[t] = (counts[t]||0) + 1);
+    const maxCount = Math.max(...Object.values(counts));
+    const top = Object.keys(counts).filter(t => counts[t] === maxCount);
+    if(top.length !== 1) return {tie:true};
+    const majority = top[0];
+    const eliminatedIds = Object.keys(choices).filter(id => choices[id] !== majority);
+    return {tie:false, eliminatedIds};
+  }
+
+  function renderStatusBar(){
+    const bar = document.getElementById('statusBar');
+    if(gameOver){
+      bar.innerHTML = `Tournament #${tournamentNum} · <span class="champ-tag">🏆 Champion: ${champion.name}</span>`;
+      return;
+    }
+    const activeCount = players.filter(p => p.active).length;
+    const userActive = players.find(p => p.id==='user').active;
+    let hint = userActive ? 'Pick a symbol and play the round' : 'You are eliminated — AI keep playing';
+    bar.innerHTML = `Tournament #${tournamentNum} · Round ${roundNum+1} · <b>${activeCount} players remain</b> · ${hint}`;
+  }
+
+  function liveCellInner(p){
+    if(gameOver){
+      if(champion && p.id === champion.id) return `<div class="mini-badge champ">🏆</div>`;
+      return `<div class="mini-badge dash">—</div>`;
+    }
+    if(!p.active) return `<div class="mini-badge dash">—</div>`;
+    if(p.human){
+      return `<div class="mini-choices">
+        ${['kamen','nuzky','papir'].map(c => `
+          <div class="choice-mini${selected===c ? ' selected':''}" data-choice="${c}" title="${labels[c]}">${glyphs[c]}</div>
+        `).join('')}
+      </div>`;
+    }
+    return `<div class="mini-badge wait">?</div>`;
+  }
+
+  function renderPlayers(){
+    const grid = document.getElementById('playersGrid');
+    let html = '';
+
+    // header row
+    players.forEach(p => {
+      const elimMark = !p.active ? '<span class="x-mark">✖</span>' : '';
+      const poweredHtml = p.model ? `<div class="side-powered">${p.provider}<span class="model-name">${p.model}</span></div>` : '';
+      html += `<div class="head-cell ${p.id}${!p.active ? ' eliminated':''}">
+        <div class="side-name"><span class="dot"></span><span>${p.human ? 'You' : p.name}</span>${elimMark}</div>
+        ${poweredHtml}
+      </div>`;
+    });
+
+    // live row — the only row now, this is where you're currently picking
+    players.forEach(p => {
+      html += `<div class="row-cell live-cell">${liveCellInner(p)}</div>`;
+    });
+
+    grid.innerHTML = html;
+
+    grid.querySelectorAll('.choice-mini').forEach(c => {
+      c.addEventListener('click', () => {
+        const userP = players.find(p => p.id==='user');
+        if(!userP.active || gameOver) return;
+        selected = c.dataset.choice;
+        renderPlayers();
+        renderButton();
+      });
+    });
+  }
+
+  function renderButton(){
+    const btn = document.getElementById('playBtn');
+    btn.classList.toggle('champion-btn', gameOver);
+    if(gameOver){
+      btn.textContent = 'New Tournament';
+      btn.disabled = false;
+      return;
+    }
+    const userP = players.find(p => p.id==='user');
+    btn.textContent = 'Play Round';
+    btn.disabled = userP.active && !selected;
+  }
+
+  function renderAll(){
+    renderScoreboard();
+    renderStatusBar();
+    renderPlayers();
+    renderButton();
+  }
+
+  function addRoundBlock(html){
+    const feed = document.getElementById('historyFeed');
+    const div = document.createElement('div');
+    div.className = 'round-block';
+    div.innerHTML = html;
+    feed.insertBefore(div, feed.children[1] || null);
+  }
+
+  function playRound(){
+    const options = ['kamen','nuzky','papir'];
+    const choices = {};
+    const activePlayers = players.filter(p => p.active);
+
+    activePlayers.forEach(p => {
+      if(p.human){
+        choices[p.id] = selected;
+      } else {
+        choices[p.id] = options[Math.floor(Math.random()*3)];
+      }
+    });
+
+    roundNum++;
+    const result = resolveRound(choices);
+
+    let selLines = activePlayers.map(p => `<div class="sel-line"><span class="name">${p.name}</span> selected ${labels[choices[p.id]]}.</div>`).join('');
+    let block = `<div class="round-title">Round ${roundNum}</div>${selLines}`;
+
+    if(result.tie){
+      block += `<span class="tie-line">Tie — replay required.</span>`;
+      addRoundBlock(block);
+      activePlayers.forEach(p => scores[p.id]++);
+      selected = null;
+      renderAll();
+      return;
+    }
+
+    result.eliminatedIds.forEach(id => {
+      const p = players.find(pl => pl.id === id);
+      p.active = false;
+      block += `<span class="elim-line">${p.name} was eliminated.</span>`;
+    });
+
+    const remaining = players.filter(p => p.active);
+    remaining.forEach(p => scores[p.id]++);
+
+    if(remaining.length === 1){
+      gameOver = true;
+      champion = remaining[0];
+      scores[champion.id] += 2;
+      block += `<span class="champ-line">Champion: ${champion.name} 🏆</span>`;
+      addRoundBlock(block);
+      selected = null;
+      renderAll();
+      return;
+    }
+
+    block += `<span class="remain-line">${remaining.length} players remain.</span>`;
+    addRoundBlock(block);
+    selected = null;
+    renderAll();
+  }
+
+  // Returns every round from every tournament played this session, oldest first,
+  // as plain text. This is what will get sent to each AI opponent as context
+  // before its move once the backend is wired in — nothing here is trimmed
+  // or reset by "New Tournament", only by a full page reload.
+  function getFullSessionHistoryText(){
+    const feed = document.getElementById('historyFeed');
+    const children = Array.from(feed.children);
+    const groups = [];
+    let current = null;
+    children.forEach(el => {
+      if(el.classList.contains('tournament-heading')){
+        current = { heading: el.textContent.trim(), rounds: [] };
+        groups.push(current);
+      } else if(current){
+        current.rounds.push(el.textContent.trim());
+      }
+    });
+    groups.reverse(); // oldest tournament first
+    return groups.map(g => {
+      const roundsChrono = g.rounds.slice().reverse(); // oldest round first within the tournament
+      return [g.heading, ...roundsChrono].join('\n\n');
+    }).join('\n\n');
+  }
+
+  document.getElementById('playBtn').addEventListener('click', () => {
+    if(gameOver){
+      initTournament();
+      return;
+    }
+    playRound();
+  });
+
+  renderOpponentsPanel();
+  initTournament();
+</script>
+
+</body>
+</html>
