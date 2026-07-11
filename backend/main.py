@@ -1,6 +1,7 @@
 import os
 import json
 import random
+import logging
 from pathlib import Path
 from typing import Literal
 
@@ -8,10 +9,16 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from backend.providers.anthropic_provider import get_move as anthropic_get_move
+from backend.providers.google_provider import get_move as google_get_move
+from backend.providers.openai_provider import get_move as openai_get_move
+from backend.providers.xai_provider import get_move as xai_get_move
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_OUT_DIR = BASE_DIR / "frontend" / "out"
 PLACEHOLDER_DIR = BASE_DIR / "backend" / "_placeholder_static"
 MODELS_CONFIG_PATH = BASE_DIR / "config" / "models.json"
+LOGGER = logging.getLogger(__name__)
 
 Choice = Literal["kamen", "nuzky", "papir"]
 AIPlayerId = Literal["sam", "claude", "elon", "sergey"]
@@ -46,6 +53,12 @@ def _load_models_config() -> dict[str, AIPlayerConfig]:
 
 MODEL_CONFIG = _load_models_config()
 RANDOM_CHOICES: tuple[Choice, Choice, Choice] = ("kamen", "nuzky", "papir")
+PROVIDER_TO_GET_MOVE = {
+  "openai": openai_get_move,
+  "anthropic": anthropic_get_move,
+  "xai": xai_get_move,
+  "google": google_get_move,
+}
 
 
 def _resolve_static_dir() -> Path:
@@ -79,13 +92,27 @@ app = FastAPI(title="RPS Frontier Arena")
 
 @app.post("/api/ai-move", response_model=AIMoveResponse)
 def ai_move(payload: AIMoveRequest) -> AIMoveResponse:
-  # Part 4: keep provider plumbing in place while still returning random choices.
+  # Backend remains stateless: every request is resolved only from payload + model config.
   if payload.player_id not in MODEL_CONFIG:
     raise HTTPException(status_code=400, detail="Unknown player_id")
 
-  _config = MODEL_CONFIG[payload.player_id]
-  _ = _config.provider, _config.model, payload.active_players, payload.history
-  return AIMoveResponse(choice=random.choice(RANDOM_CHOICES))
+  config = MODEL_CONFIG[payload.player_id]
+  provider_key = config.provider.strip().lower()
+  get_move = PROVIDER_TO_GET_MOVE.get(provider_key)
+  if not get_move:
+    LOGGER.warning(
+      "Unknown provider '%s' configured for '%s'. Falling back to random choice.",
+      config.provider,
+      payload.player_id,
+    )
+    return AIMoveResponse(choice=random.choice(RANDOM_CHOICES))
+
+  choice = get_move(config.model, payload.history)
+  if choice not in RANDOM_CHOICES:
+    LOGGER.warning("Provider returned invalid choice %r. Falling back to random choice.", choice)
+    choice = random.choice(RANDOM_CHOICES)
+
+  return AIMoveResponse(choice=choice)
 
 
 app.mount("/", StaticFiles(directory=str(_resolve_static_dir()), html=True), name="frontend")

@@ -92,18 +92,18 @@ This is a faithful React port, not a redesign — see `AGENTS.md` "Starting Poin
 
 For each provider below, implement its wrapper in `backend/providers/` using its official Python SDK (`uv add` each one as needed), wire it into `/api/ai-move` only for that specific player id, and leave the other 3 players on the Part 4 fake logic until their own turn comes up. Test each in isolation before moving to the next. Every wrapper reads its model ID from `config/models.json` — never hardcode a model string in these files.
 
-- [ ] **Sam / OpenAI GPT-5.4** (`backend/providers/openai_provider.py`, `uv add openai`, reads `OPENAI_API_KEY`)
-- [ ] **Claude / Anthropic Claude Sonnet 5** (`backend/providers/anthropic_provider.py`, `uv add anthropic`, reads `ANTHROPIC_API_KEY`)
-- [ ] **Elon / xAI Grok 4.3** (`backend/providers/xai_provider.py`, reads `GROK_API_KEY`, `reasoning_effort: "none"` — xAI's API is OpenAI-compatible, so this can reuse the `openai` SDK pointed at xAI's base URL)
-- [ ] **Sergey / Google Gemini 3.1 Pro** (`backend/providers/google_provider.py`, `uv add google-genai`, reads `GEMINI_API_KEY` only — do not also set or fall back to `GOOGLE_API_KEY`, see `AGENTS.md` note on precedence)
+- [x] **Sam / OpenAI GPT-5.4** (`backend/providers/openai_provider.py`, `uv add openai`, reads `OPENAI_API_KEY`)
+- [x] **Claude / Anthropic Claude Sonnet 5** (`backend/providers/anthropic_provider.py`, `uv add anthropic`, reads `ANTHROPIC_API_KEY`)
+- [x] **Elon / xAI Grok 4.3** (`backend/providers/xai_provider.py`, reads `GROK_API_KEY`, `reasoning_effort: "none"` — xAI's API is OpenAI-compatible, so this can reuse the `openai` SDK pointed at xAI's base URL)
+- [x] **Sergey / Google Gemini 3.1 Pro** (`backend/providers/google_provider.py`, `uv add google-genai`, reads `GEMINI_API_KEY` only — do not also set or fall back to `GOOGLE_API_KEY`, see `AGENTS.md` note on precedence)
 
 For each provider:
-- [ ] Confirm the exact current model ID string in `config/models.json` against that provider's live docs (do not assume from training data — verify, since IDs get deprecated)
-- [ ] Write a prompt that includes the full `history` string passed in from the frontend, plus a clear instruction to respond with a single word (`kamen`/`nuzky`/`papir`) reflecting its actual strategic choice given that history
-- [ ] Parse the response defensively: lowercase, trim, map common variants (e.g. "rock" / "kámen" / "🪨") to the 3 valid values; if unparseable, fall back to random for that call only and log a warning
-- [ ] Add a request timeout (e.g. 8s) with fallback to random on timeout
-- [ ] Explicitly catch that SDK's rate-limit/quota exception type (not just a generic `except Exception`) and fall back to random on it, since each provider runs on a small capped budget (~$5) and will realistically hit this during testing or real use
-- [ ] Wrap the entire `get_move()` body so that literally any exception — expected or not, from the SDK, from parsing, from anything — is caught and results in a random fallback choice. This function must never let an exception propagate up to the route handler. See `AGENTS.md` "Fallback Behavior" for the full rule
+- [x] Confirm the exact current model ID string in `config/models.json` against that provider's live docs (do not assume from training data — verify, since IDs get deprecated)
+- [x] Write a prompt that includes the full `history` string passed in from the frontend, plus a clear instruction to respond with a single word (`kamen`/`nuzky`/`papir`) reflecting its actual strategic choice given that history
+- [x] Parse the response defensively: lowercase, trim, map common variants (e.g. "rock" / "kámen" / "🪨") to the 3 valid values; if unparseable, fall back to random for that call only and log a warning
+- [x] Add a request timeout (e.g. 8s) with fallback to random on timeout
+- [x] Explicitly catch that SDK's rate-limit/quota exception type (not just a generic `except Exception`) and fall back to random on it, since each provider runs on a small capped budget (~$5) and will realistically hit this during testing or real use
+- [x] Wrap the entire `get_move()` body so that literally any exception — expected or not, from the SDK, from parsing, from anything — is caught and results in a random fallback choice. This function must never let an exception propagate up to the route handler. See `AGENTS.md` "Fallback Behavior" for the full rule
 
 **Test per provider:** write a small standalone test script (or pytest test) that calls `get_move(model, history)` directly with a fabricated multi-tournament sample history and confirms a valid, context-aware-looking move comes back. Also test the failure path directly: mock or force a rate-limit/quota exception from that provider's SDK and confirm `get_move()` still returns a valid fallback choice instead of raising. Then play across two tournaments with only that provider checked as the opponent.
 **Success criteria:** all 4 providers individually return valid, timely moves that visibly take the full multi-tournament history into account (not just uniformly random); a simulated rate-limit/quota failure on each of the 4 providers individually degrades gracefully to random without crashing the round or raising an exception; per the API Contract, the endpoint still returns HTTP 200 with a valid `choice` even when a provider call fails for any reason.
