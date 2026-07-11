@@ -191,4 +191,6 @@ memory.db
 frontend/node_modules/
 frontend/.next/
 frontend/out/
+!frontend/lib/
+!frontend/lib/**
 

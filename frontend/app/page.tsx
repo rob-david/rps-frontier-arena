@@ -1,66 +1,172 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+
+import { useEffect, useState } from "react";
+
+import HistoryPanel from "@/components/HistoryPanel";
+import OpponentsPanel from "@/components/OpponentsPanel";
+import PlayersTable from "@/components/PlayersTable";
+import Scoreboard from "@/components/Scoreboard";
+import {
+  appendRound,
+  appendTournamentHeading,
+  applyRound,
+  createInitialScores,
+  createTournamentPlayers,
+  DEFAULT_CHECKED_OPPONENTS,
+  getFullSessionHistoryText,
+  OPPONENT_IDS,
+  pickRandomChoice,
+  type CheckedOpponents,
+  type Choice,
+  type OpponentId,
+  type PlayerState,
+  type TournamentHistory,
+} from "@/lib/game";
+
+declare global {
+  interface Window {
+    getFullSessionHistoryText?: () => string;
+  }
+}
+
+const INITIAL_CHECKED_OPPONENTS: CheckedOpponents = {
+  ...DEFAULT_CHECKED_OPPONENTS,
+};
 
 export default function Home() {
+  const [checkedOpponents, setCheckedOpponents] =
+    useState<CheckedOpponents>(INITIAL_CHECKED_OPPONENTS);
+  const [players, setPlayers] = useState<PlayerState[]>(() =>
+    createTournamentPlayers(INITIAL_CHECKED_OPPONENTS),
+  );
+  const [tournamentNum, setTournamentNum] = useState(1);
+  const [roundNum, setRoundNum] = useState(0);
+  const [selected, setSelected] = useState<Choice | null>(null);
+  const [gameOver, setGameOver] = useState(false);
+  const [champion, setChampion] = useState<PlayerState | null>(null);
+  const [scores, setScores] = useState(createInitialScores);
+  const [history, setHistory] = useState<TournamentHistory[]>(() =>
+    appendTournamentHeading([], 1),
+  );
+
+  useEffect(() => {
+    window.getFullSessionHistoryText = () => getFullSessionHistoryText(history);
+    return () => {
+      delete window.getFullSessionHistoryText;
+    };
+  }, [history]);
+
+  const initTournament = (nextCheckedOpponents: CheckedOpponents) => {
+    const nextTournamentNum = tournamentNum + 1;
+    setPlayers(createTournamentPlayers(nextCheckedOpponents));
+    setRoundNum(0);
+    setSelected(null);
+    setGameOver(false);
+    setChampion(null);
+    setTournamentNum(nextTournamentNum);
+    setHistory((prevHistory) => appendTournamentHeading(prevHistory, nextTournamentNum));
+  };
+
+  const handleToggleOpponent = (id: OpponentId) => {
+    const activeCount = OPPONENT_IDS.filter((opponentId) => checkedOpponents[opponentId]).length;
+    if (checkedOpponents[id] && activeCount <= 1) {
+      return;
+    }
+
+    const nextCheckedOpponents = {
+      ...checkedOpponents,
+      [id]: !checkedOpponents[id],
+    };
+
+    setCheckedOpponents(nextCheckedOpponents);
+    initTournament(nextCheckedOpponents);
+  };
+
+  const handlePlayRound = () => {
+    if (gameOver) {
+      initTournament(checkedOpponents);
+      return;
+    }
+
+    const activePlayers = players.filter((player) => player.active);
+    const userPlayer = activePlayers.find((player) => player.id === "user");
+    if (userPlayer && !selected) {
+      return;
+    }
+
+    const choices: Record<string, Choice> = {};
+    activePlayers.forEach((player) => {
+      if (player.human) {
+        choices[player.id] = selected as Choice;
+      } else {
+        choices[player.id] = pickRandomChoice();
+      }
+    });
+
+    const nextRoundNum = roundNum + 1;
+    const output = applyRound({
+      players,
+      scores,
+      choices,
+      roundNumber: nextRoundNum,
+    });
+
+    setRoundNum(nextRoundNum);
+    setPlayers(output.players);
+    setScores(output.scores);
+    setHistory((prevHistory) => appendRound(prevHistory, output.roundRecord));
+    setGameOver(output.gameOver);
+    setChampion(output.champion);
+    setSelected(null);
+  };
+
+  const activeCount = players.filter((player) => player.active).length;
+  const userActive = Boolean(players.find((player) => player.id === "user")?.active);
+  const hint = userActive
+    ? "Pick a symbol and play the round"
+    : "You are eliminated — AI keep playing";
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="app">
+      <header>
+        <div className="eyebrow">Frontier Arena · 1 player, 4 AI</div>
+        <h1>
+          Rock, Paper, <span className="accent">Scissors</span>
+        </h1>
+        <div className="status-bar">
+          {gameOver ? (
+            <>
+              Tournament #{tournamentNum} · <span className="champ-tag">🏆 Champion: {champion?.name}</span>
+            </>
+          ) : (
+            <>
+              Tournament #{tournamentNum} · Round {roundNum + 1} · <b>{activeCount} players remain</b> · {hint}
+            </>
+          )}
+        </div>
+      </header>
+
+      <Scoreboard checkedOpponents={checkedOpponents} scores={scores} />
+
+      <div className="divider-rule" />
+
+      <OpponentsPanel checkedOpponents={checkedOpponents} onToggleOpponent={handleToggleOpponent} />
+
+      <div className="divider-rule" />
+
+      <div className="table">
+        <PlayersTable
+          players={players}
+          selected={selected}
+          gameOver={gameOver}
+          championId={champion?.id ?? null}
+          onSelectChoice={setSelected}
+          onPlayRound={handlePlayRound}
         />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        <HistoryPanel history={history} />
+      </div>
+
+      <footer className="note">Powered by Claude &amp; GitHub Copilot · July 2026</footer>
     </div>
   );
 }

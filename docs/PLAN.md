@@ -53,12 +53,12 @@
 
 This is a faithful React port, not a redesign — see `AGENTS.md` "Starting Point" for the exact rules on what must be preserved verbatim (CSS values, game logic, text output formats) versus what necessarily changes (DOM manipulation becomes React state/JSX).
 
-- [ ] Port all CSS custom properties, fonts, and styles from `docs/index.html`'s `<style>` block into `frontend/app/globals.css`, preserving every value exactly
-- [ ] Create `frontend/lib/game.ts`: port the pure logic functions from `docs/index.html` with no behavior changes — `beats()`, `resolveRound()`, the scoring rules, tournament/round counters, and `getFullSessionHistoryText()` (its plain-text output format must match exactly, since the backend will depend on this shape later)
-- [ ] Build the main page (`frontend/app/page.tsx`) holding game state via `useState`/`useReducer`: players, tournament number, round number, selected choice, game-over/champion state, scores, checked opponents
-- [ ] Build presentational components matching the mockup's sections: `Scoreboard.tsx`, `OpponentsPanel.tsx`, `PlayersTable.tsx` (the 5-column single live row — fixed height, no per-round history rows), `HistoryPanel.tsx` (the sidebar, the only place round-by-round history is shown). Keep this component split proportional to the app's size — don't invent more components than these
-- [ ] AI opponents still use `Math.random()` at this stage (in `game.ts` or the page component) — do not build the backend call yet
-- [ ] Run `npm run build` to produce `frontend/out/`, point FastAPI's `StaticFiles` mount at it
+- [x] Port all CSS custom properties, fonts, and styles from `docs/index.html`'s `<style>` block into `frontend/app/globals.css`, preserving every value exactly
+- [x] Create `frontend/lib/game.ts`: port the pure logic functions from `docs/index.html` with no behavior changes — `beats()`, `resolveRound()`, the scoring rules, tournament/round counters, and `getFullSessionHistoryText()` (its plain-text output format must match exactly, since the backend will depend on this shape later)
+- [x] Build the main page (`frontend/app/page.tsx`) holding game state via `useState`/`useReducer`: players, tournament number, round number, selected choice, game-over/champion state, scores, checked opponents
+- [x] Build presentational components matching the mockup's sections: `Scoreboard.tsx`, `OpponentsPanel.tsx`, `PlayersTable.tsx` (the 5-column single live row — fixed height, no per-round history rows), `HistoryPanel.tsx` (the sidebar, the only place round-by-round history is shown). Keep this component split proportional to the app's size — don't invent more components than these
+- [x] AI opponents still use `Math.random()` at this stage (in `game.ts` or the page component) — do not build the backend call yet
+- [x] Run `npm run build` to produce `frontend/out/`, point FastAPI's `StaticFiles` mount at it
 
 **Test:** run the NextJS dev server (`npm run dev`) and manually compare every screen, interaction, and edge case against `docs/index.html` opened directly in a second browser tab, side by side:
 - Player columns always stay in a row, never stack, even on narrow viewports
