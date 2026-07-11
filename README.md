@@ -53,6 +53,20 @@ cd frontend && npm install && cd ..
 
 Then open `http://localhost:8000`.
 
+### Local run commands
+
+Start the app:
+
+- Mac/Linux (or Git Bash/WSL): `./scripts/start.sh`
+- Windows PowerShell: `.\scripts\start.ps1`
+
+Stop the app:
+
+- Mac/Linux (or Git Bash/WSL): `./scripts/stop.sh`
+- Windows PowerShell: `.\scripts\stop.ps1`
+
+Both start scripts follow the same flow: build the static NextJS frontend once, then run FastAPI to serve both the UI and `/api` routes.
+
 ### Required API keys
 
 | Player | Provider | `.env` variable |
@@ -61,6 +75,43 @@ Then open `http://localhost:8000`.
 | Claude | Anthropic | `ANTHROPIC_API_KEY` |
 | Elon | xAI | `GROK_API_KEY` |
 | Sergey | Google | `GEMINI_API_KEY` |
+
+Where to get keys:
+
+- OpenAI: https://platform.openai.com/api-keys
+- Anthropic: https://console.anthropic.com/settings/keys
+- xAI: https://console.x.ai/
+- Google Gemini API: https://aistudio.google.com/app/apikey
+
+### Change provider models
+
+To swap a model, edit `config/models.json`, then restart the app. No Python source edits are required.
+
+Example (change Sam's model ID):
+
+```json
+{
+	"sam": { "provider": "openai", "model": "gpt-5.4" }
+}
+```
+
+### Model ID maintenance
+
+Provider model IDs can change or be deprecated with little notice. Re-verify configured IDs periodically against each provider's current docs and update `config/models.json` when needed.
+
+### Session history size policy
+
+No history-size cutoff is currently implemented.
+
+This was tested through Part 6 with extended sessions up to 12 tournaments and roughly 1000 characters of accumulated history sent in requests, with no meaningful latency issues observed in that range.
+
+If real-world sessions become significantly longer, revisit this decision and trim older tournament detail (for example: keep recent tournaments in full text and summarize older ones).
+
+### Reference source of truth
+
+`docs/index.html` is the permanent visual and game-logic reference for this project.
+
+If gameplay behavior or UI rules need to change, update the reference first (or in lockstep) and re-port to the app so the reference remains trustworthy.
 
 ## Project structure
 

@@ -129,12 +129,12 @@ For each provider:
 
 ## Part 7: Documentation
 
-- [ ] `README.md` already exists at the project root with its presentation-facing sections written (title, screenshot, live demo link, features, tech stack, development-process narrative). Do not rewrite, restructure, or remove any of that — only add the technical/setup content below, in a way that fits naturally alongside what's already there
-- [ ] Add: setup steps, all 4 required `.env` keys and where to get them, how to run locally (`scripts/start.sh` on Mac/Linux, `scripts/start.ps1` on Windows), how to stop, and how to change a model (edit `config/models.json`, restart)
-- [ ] Add a note that provider model IDs should be periodically re-verified, since providers deprecate/rename models with little notice
-- [ ] Document the history-size cutoff strategy decided in Part 6, if any was needed
-- [ ] Add a note that `docs/index.html` is the permanent design/logic reference and should stay in sync in spirit with the live app — if the app's behavior ever needs to change, consider updating `docs/index.html` first and re-porting, to keep it trustworthy as a reference
-- [ ] No emojis anywhere in docs or code, per `AGENTS.md` coding standards — this includes the sections you add to `README.md`, even though the existing presentation sections may already have a different tone
+- [x] `README.md` already exists at the project root with its presentation-facing sections written (title, screenshot, live demo link, features, tech stack, development-process narrative). Do not rewrite, restructure, or remove any of that — only add the technical/setup content below, in a way that fits naturally alongside what's already there
+- [x] Add: setup steps, all 4 required `.env` keys and where to get them, how to run locally (`scripts/start.sh` on Mac/Linux, `scripts/start.ps1` on Windows), how to stop, and how to change a model (edit `config/models.json`, restart)
+- [x] Add a note that provider model IDs should be periodically re-verified, since providers deprecate/rename models with little notice
+- [x] Document the history-size cutoff strategy decided in Part 6, if any was needed
+- [x] Add a note that `docs/index.html` is the permanent design/logic reference and should stay in sync in spirit with the live app — if the app's behavior ever needs to change, consider updating `docs/index.html` first and re-porting, to keep it trustworthy as a reference
+- [x] No emojis anywhere in docs or code, per `AGENTS.md` coding standards — this includes the sections you add to `README.md`, even though the existing presentation sections may already have a different tone
 
 **Success criteria:** a new developer can clone the repo, fill in all 4 keys in `.env`, run `uv sync`, `npm install` (in `frontend/`), and `scripts/start.sh` (or `scripts/start.ps1` on Windows), and have a fully working game against real AI opponents within a few minutes, entirely locally, looking and behaving exactly like `docs/index.html`. `README.md` reads as one coherent document, not as two mismatched halves.
 
