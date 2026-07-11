@@ -187,3 +187,8 @@ memory.db
 6_mcp/accounts.db
 6_mcp/memory/*.db
 
+# Frontend build artifacts
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+

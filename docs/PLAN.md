@@ -2,11 +2,11 @@
 
 ## Part 0: Understand before touching anything
 
-- [ ] Read `AGENTS.md` in full
-- [ ] Read `docs/index.html` in full
-- [ ] **Do not write any code, create any files, or run any commands in this step**
-- [ ] Explain back your understanding of the project to the user: what it is, how the game works, what the tech stack is, and what's already fixed versus what you're expected to build
-- [ ] Wait for the user's explicit approval before proceeding to Part 1
+- [x] Read `AGENTS.md` in full
+- [x] Read `docs/index.html` in full
+- [x] **Do not write any code, create any files, or run any commands in this step**
+- [x] Explain back your understanding of the project to the user: what it is, how the game works, what the tech stack is, and what's already fixed versus what you're expected to build
+- [x] Wait for the user's explicit approval before proceeding to Part 1
 
 **Success criteria:** the user has confirmed your understanding is correct. Nothing has been created, modified, or run yet.
 
@@ -14,10 +14,10 @@
 
 ## Part 1: Plan
 
-- [ ] Confirm the starting structure described in `AGENTS.md` "What Already Exists When You Start" is actually present: `AGENTS.md`, `.env` in the project root, and `docs/PLAN.md` + `docs/index.html`. Do not create or move any of these — if one is missing, stop and ask the user rather than guessing
-- [ ] Walk through this plan (`docs/PLAN.md`) part by part and confirm you understand each phase's scope and success criteria
-- [ ] Present the plan to the user and get explicit approval before starting Part 2
-- [ ] From this point on, treat `docs/PLAN.md` as fixed: check off items as they're completed and tested, but do not restructure, rewrite, or add new parts/substeps to it. If you discover the plan needs to change, stop and ask the user rather than editing it yourself. Implementation notes and decisions made along the way belong in `backend/AGENTS.md` / `frontend/AGENTS.md` (see root `AGENTS.md` "Working Documentation"), not in `docs/PLAN.md` itself
+- [x] Confirm the starting structure described in `AGENTS.md` "What Already Exists When You Start" is actually present: `AGENTS.md`, `.env` in the project root, and `docs/PLAN.md` + `docs/index.html`. Do not create or move any of these — if one is missing, stop and ask the user rather than guessing
+- [x] Walk through this plan (`docs/PLAN.md`) part by part and confirm you understand each phase's scope and success criteria
+- [x] Present the plan to the user and get explicit approval before starting Part 2
+- [x] From this point on, treat `docs/PLAN.md` as fixed: check off items as they're completed and tested, but do not restructure, rewrite, or add new parts/substeps to it. If you discover the plan needs to change, stop and ask the user rather than editing it yourself. Implementation notes and decisions made along the way belong in `backend/AGENTS.md` / `frontend/AGENTS.md` (see root `AGENTS.md` "Working Documentation"), not in `docs/PLAN.md` itself
 
 **Success criteria:** user has confirmed the plan; no code written yet.
 
@@ -25,7 +25,7 @@
 
 ## Part 2: Scaffolding
 
-- [ ] Create the new directories/files described in `AGENTS.md` "Project Structure" that don't already exist:
+- [x] Create the new directories/files described in `AGENTS.md` "Project Structure" that don't already exist:
   ```
   /backend
   /frontend
@@ -33,16 +33,16 @@
   /scripts
   ```
   (`docs/` and its contents already exist — do not touch `docs/PLAN.md` or `docs/index.html` in this step)
-- [ ] Backend: initialize the Python project with `uv init` / `uv add fastapi uvicorn python-dotenv`
-- [ ] Create `backend/AGENTS.md` (empty except for a one-line title) — from this point on, every later part that touches the backend appends a short note to it (see `AGENTS.md` "Working Documentation" for the format)
-- [ ] Frontend: scaffold a NextJS app in `frontend/` (App Router), configure `next.config.js` with `output: 'export'`
-- [ ] Create `frontend/AGENTS.md` (empty except for a one-line title) — same idea, for the frontend side
-- [ ] Create `config/models.json` exactly as specified in `AGENTS.md` ("Model Configuration")
-- [ ] Set up FastAPI in `backend/main.py` — for now, mount a placeholder static directory at `/` (the real `frontend/out/` won't exist until Part 3's first build)
-- [ ] Server listens on `PORT` env var, default `8000`
-- [ ] Read the variable names already used in the existing `.env` and create `docs/.env.example` as a safe template with the same 4 variable names (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GROK_API_KEY`, `GEMINI_API_KEY`) but placeholder values — never read or print the real values from `.env`
-- [ ] Write `scripts/start.sh` (builds the frontend if needed, then runs `uv run uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}`) and `scripts/stop.sh` for Mac/Linux, plus `scripts/start.ps1` and `scripts/stop.ps1` doing the same thing for native Windows PowerShell — keep both pairs in sync, they must do exactly the same thing
-- [ ] Write a one-off connectivity check script (a throwaway script, not part of `backend/providers/` — that gets built properly in Part 5) that sends a trivial prompt (e.g. "What is 2+2? Reply with just the number.") to each of the 4 providers using the keys from `.env`, and prints whether each one succeeded. Use plain HTTP requests (`requests` or `httpx`) for this, not the official SDKs — those get added properly per-provider in Part 5, no need to install them twice. This is a fast sanity check that all 4 API keys and network paths actually work, run once now — before any real feature code depends on them — rather than discovering a bad key deep inside Part 5's more complex tests
+- [x] Backend: initialize the Python project with `uv init` / `uv add fastapi uvicorn python-dotenv`
+- [x] Create `backend/AGENTS.md` (empty except for a one-line title) — from this point on, every later part that touches the backend appends a short note to it (see `AGENTS.md` "Working Documentation" for the format)
+- [x] Frontend: scaffold a NextJS app in `frontend/` (App Router), configure `next.config.js` with `output: 'export'`
+- [x] Create `frontend/AGENTS.md` (empty except for a one-line title) — same idea, for the frontend side
+- [x] Create `config/models.json` exactly as specified in `AGENTS.md` ("Model Configuration")
+- [x] Set up FastAPI in `backend/main.py` — for now, mount a placeholder static directory at `/` (the real `frontend/out/` won't exist until Part 3's first build)
+- [x] Server listens on `PORT` env var, default `8000`
+- [x] Read the variable names already used in the existing `.env` and create `docs/.env.example` as a safe template with the same 4 variable names (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GROK_API_KEY`, `GEMINI_API_KEY`) but placeholder values — never read or print the real values from `.env`
+- [x] Write `scripts/start.sh` (builds the frontend if needed, then runs `uv run uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}`) and `scripts/stop.sh` for Mac/Linux, plus `scripts/start.ps1` and `scripts/stop.ps1` doing the same thing for native Windows PowerShell — keep both pairs in sync, they must do exactly the same thing
+- [x] Write a one-off connectivity check script (a throwaway script, not part of `backend/providers/` — that gets built properly in Part 5) that sends a trivial prompt (e.g. "What is 2+2? Reply with just the number.") to each of the 4 providers using the keys from `.env`, and prints whether each one succeeded. Use plain HTTP requests (`requests` or `httpx`) for this, not the official SDKs — those get added properly per-provider in Part 5, no need to install them twice. This is a fast sanity check that all 4 API keys and network paths actually work, run once now — before any real feature code depends on them — rather than discovering a bad key deep inside Part 5's more complex tests
 
 **Test:** `scripts/start.sh` (or `scripts/start.ps1` on Windows) boots the server locally; visiting `/` shows something (even a placeholder). The matching stop script cleanly stops it. The connectivity check script reports success for all 4 providers.
 **Success criteria:** both the Node and Python halves of the project are independently runnable; no database, no persistence anywhere in the scaffold; `uv.lock` and `frontend/package-lock.json` are both committed; `config/models.json` exists and is valid JSON; `backend/AGENTS.md` and `frontend/AGENTS.md` exist (empty logs, ready for future entries); all 4 API keys are confirmed working via the connectivity check; `docs/index.html` and `docs/PLAN.md` are untouched from their starting state.

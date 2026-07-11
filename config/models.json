@@ -1,0 +1,6 @@
+{
+  "sam": { "provider": "openai", "model": "gpt-5.4" },
+  "claude": { "provider": "anthropic", "model": "claude-sonnet-5" },
+  "elon": { "provider": "xai", "model": "grok-4.3" },
+  "sergey": { "provider": "google", "model": "gemini-3.1-pro-preview" }
+}
