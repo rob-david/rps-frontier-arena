@@ -14,7 +14,7 @@ This project is a Rock-Paper-Scissors tournament web app. Key features:
   - All active players choose rock/paper/scissors simultaneously each round
   - If everyone picks the same symbol: tie, round replays, nobody eliminated
   - If exactly 2 distinct symbols are chosen: standard RPS rule applies, the losing symbol's players are eliminated
-  - If all 3 symbols are chosen: whoever picked the single most common symbol survives; everyone else is eliminated. If there is no single most common symbol (a tie for majority), nobody is eliminated and the round replays
+  - If all 3 symbols are chosen: nobody can be declared a fair winner (no symbol beats both of the others at once), so it's always a tie regardless of how the votes split — nobody is eliminated and the round replays
   - Tournament ends when 1 player remains (the Champion)
 - Before choosing its move each round, every AI opponent is given the **complete history of the current browser session** — every round from every tournament played so far, not just the current tournament. Starting a "New Tournament" does NOT clear this context; it only resets the active player pool and the elimination state for the new bracket. Only a full page reload clears everything
 - A scoreboard that persists across tournaments within the current browser session: +1 point per round survived (including ties, where everyone survives), +2 bonus points for winning a tournament. "New Tournament" keeps the scoreboard; a full page reload does not (see Limitations)

@@ -205,6 +205,15 @@
   .mini-badge.dash{ color:var(--muted); font-size:13px; }
   .mini-badge.wait{ color:var(--muted); opacity:0.55; font-size:15px; border:1.5px dashed var(--line); }
   .mini-badge.champ{ font-size:19px; }
+  .mini-badge.filled{ background:var(--bg-panel); border:1.5px solid var(--line); }
+  .mini-badge.out-hit{ opacity:0.45; filter:grayscale(0.4); border-color:var(--eliminated); }
+
+  .last-round-cell{ opacity:0.88; }
+  .round-tag{
+    position:absolute; top:4px; left:6px;
+    font-family:'JetBrains Mono', monospace; font-size:8px; letter-spacing:0.04em;
+    color:var(--muted); opacity:0.75;
+  }
 
   .side-name{
     font-family:'Chakra Petch', sans-serif; font-weight:600; font-size:14px;
@@ -303,6 +312,7 @@
     .mini-choices{ gap:3px; }
     .head-cell{ padding:8px 3px; min-height:50px; }
     .row-cell{ min-height:38px; }
+    .round-tag{ font-size:7px; top:2px; left:3px; }
   }
 </style>
 </head>
@@ -377,6 +387,7 @@
     list.querySelectorAll('.opp-toggle').forEach(el => {
       el.addEventListener('click', (e) => {
         e.preventDefault();
+        if(isThinking) return; // don't let opponents change while a round is being resolved
         const id = el.dataset.id;
         const activeCount = OPPONENT_IDS.filter(o => checkedOpponents[o]).length;
         if(checkedOpponents[id] && activeCount <= 1) return; // keep at least 1 opponent
@@ -393,6 +404,9 @@
 
   let players, tournamentNum, roundNum, selected, gameOver, champion;
   let scores = {user:0, sam:0, claude:0, elon:0, sergey:0};
+  let lastRoundChoices = null; // {roundNum, choices, eliminatedIds} for the single most recently played round
+  let isThinking = false; // true while waiting for the round result (real app: while awaiting AI provider responses)
+  let gameGeneration = 0; // bumped every initTournament() call; guards against a stale in-flight round resolving into a reset game
 
   function renderScoreboard(){
     const row = document.getElementById('scoreboardRow');
@@ -413,6 +427,9 @@
     selected = null;
     gameOver = false;
     champion = null;
+    lastRoundChoices = null;
+    isThinking = false;
+    gameGeneration++;
 
     // New tournament heading goes on top, but everything already in the feed
     // (all previous tournaments, all their rounds) stays exactly where it is.
@@ -434,21 +451,17 @@
   function resolveRound(choices){
     const types = Object.values(choices);
     const unique = [...new Set(types)];
-    if(unique.length === 1) return {tie:true};
+    if(unique.length === 1) return {tie:true}; // everyone picked the same symbol
     if(unique.length === 2){
       const [a,b] = unique;
       const winnerType = beats(a,b) ? a : b;
       const eliminatedIds = Object.keys(choices).filter(id => choices[id] !== winnerType);
       return {tie:false, eliminatedIds};
     }
-    const counts = {};
-    types.forEach(t => counts[t] = (counts[t]||0) + 1);
-    const maxCount = Math.max(...Object.values(counts));
-    const top = Object.keys(counts).filter(t => counts[t] === maxCount);
-    if(top.length !== 1) return {tie:true};
-    const majority = top[0];
-    const eliminatedIds = Object.keys(choices).filter(id => choices[id] !== majority);
-    return {tie:false, eliminatedIds};
+    // All 3 symbols appeared — no symbol beats both of the others, so this
+    // can never be resolved fairly. Always a tie, regardless of how the
+    // votes were split; the round simply replays.
+    return {tie:true};
   }
 
   function renderStatusBar(){
@@ -479,6 +492,20 @@
     return `<div class="mini-badge wait">?</div>`;
   }
 
+  function lastRoundCellInner(p, colIdx){
+    const tag = colIdx === 0 && lastRoundChoices ? `<div class="round-tag">R${lastRoundChoices.roundNum}</div>` : '';
+    if(!lastRoundChoices){
+      return `${tag}<div class="mini-badge dash">—</div>`;
+    }
+    const choice = lastRoundChoices.choices[p.id];
+    if(!choice){
+      return `${tag}<div class="mini-badge dash">—</div>`;
+    }
+    const wasEliminated = lastRoundChoices.eliminatedIds.includes(p.id);
+    const cls = 'mini-badge filled' + (wasEliminated ? ' out-hit' : '');
+    return `${tag}<div class="${cls}">${glyphs[choice]}</div>`;
+  }
+
   function renderPlayers(){
     const grid = document.getElementById('playersGrid');
     let html = '';
@@ -493,9 +520,14 @@
       </div>`;
     });
 
-    // live row — the only row now, this is where you're currently picking
+    // live row — the only interactive row, this is where you're currently picking
     players.forEach(p => {
       html += `<div class="row-cell live-cell">${liveCellInner(p)}</div>`;
+    });
+
+    // last-round row — exactly one row below the live row, shows what was just played
+    players.forEach((p, idx) => {
+      html += `<div class="row-cell last-round-cell">${lastRoundCellInner(p, idx)}</div>`;
     });
 
     grid.innerHTML = html;
@@ -503,7 +535,7 @@
     grid.querySelectorAll('.choice-mini').forEach(c => {
       c.addEventListener('click', () => {
         const userP = players.find(p => p.id==='user');
-        if(!userP.active || gameOver) return;
+        if(!userP.active || gameOver || isThinking) return;
         selected = c.dataset.choice;
         renderPlayers();
         renderButton();
@@ -517,6 +549,11 @@
     if(gameOver){
       btn.textContent = 'New Tournament';
       btn.disabled = false;
+      return;
+    }
+    if(isThinking){
+      btn.textContent = 'Thinking...';
+      btn.disabled = true;
       return;
     }
     const userP = players.find(p => p.id==='user');
@@ -554,6 +591,12 @@
 
     roundNum++;
     const result = resolveRound(choices);
+
+    lastRoundChoices = {
+      roundNum: roundNum,
+      choices: {...choices},
+      eliminatedIds: result.tie ? [] : result.eliminatedIds
+    };
 
     let selLines = activePlayers.map(p => `<div class="sel-line"><span class="name">${p.name}</span> selected ${labels[choices[p.id]]}.</div>`).join('');
     let block = `<div class="round-title">Round ${roundNum}</div>${selLines}`;
@@ -622,7 +665,23 @@
       initTournament();
       return;
     }
-    playRound();
+    if(isThinking) return;
+
+    // In the real app this delay is naturally however long it takes to
+    // await all AI provider responses (Promise.all of fetch('/api/ai-move')).
+    // Here in the mockup there's nothing to actually wait on, so a short
+    // simulated delay stands in for it, just to demonstrate the state.
+    isThinking = true;
+    renderButton();
+    const myGeneration = gameGeneration;
+    setTimeout(() => {
+      // If a new tournament/opponent-set reset happened while this was in
+      // flight, this response is stale — drop it instead of resolving a
+      // round nobody asked for on the fresh game state.
+      if(myGeneration !== gameGeneration) return;
+      isThinking = false;
+      playRound();
+    }, 550);
   });
 
   renderOpponentsPanel();
