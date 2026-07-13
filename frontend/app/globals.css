@@ -119,6 +119,7 @@ h1 span.accent{ color:var(--player); }
 .opp-toggle.claude.checked{ border-color:var(--claude); } .opp-toggle.claude.checked .box{ background:var(--claude); border-color:var(--claude); } .opp-toggle.claude.checked .lbl{ color:var(--claude); }
 .opp-toggle.elon.checked{ border-color:var(--elon); } .opp-toggle.elon.checked .box{ background:var(--elon); border-color:var(--elon); } .opp-toggle.elon.checked .lbl{ color:var(--elon); }
 .opp-toggle.sergey.checked{ border-color:var(--sergey-1); } .opp-toggle.sergey.checked .box{ background:var(--sergey-1); border-color:var(--sergey-1); } .opp-toggle.sergey.checked .lbl{ color:var(--sergey-1); }
+.opp-toggle.locked{ opacity:0.6; cursor:not-allowed; }
 .opponents-hint{
   font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--muted); opacity:0.7;
 }
@@ -185,6 +186,7 @@ h1 span.accent{ color:var(--player); }
   border-color:var(--player); box-shadow:0 0 0 2px rgba(70,224,208,0.22);
   transform:scale(1.08);
 }
+.choice-mini.disabled{ opacity:0.5; cursor:not-allowed; pointer-events:none; }
 
 .mini-badge{
   width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center;

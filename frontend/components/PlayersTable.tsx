@@ -3,7 +3,7 @@ import { glyphs, labels, type Choice, type LastRoundChoices, type PlayerState } 
 interface PlayersTableProps {
   players: PlayerState[];
   selected: Choice | null;
-  isResolvingRound: boolean;
+  isThinking: boolean;
   gameOver: boolean;
   championId: string | null;
   lastRoundChoices: LastRoundChoices | null;
@@ -14,6 +14,7 @@ interface PlayersTableProps {
 function renderLiveCell(
   player: PlayerState,
   selected: Choice | null,
+  isThinking: boolean,
   gameOver: boolean,
   championId: string | null,
   onSelectChoice: (choice: Choice) => void,
@@ -35,10 +36,15 @@ function renderLiveCell(
         {(["kamen", "nuzky", "papir"] as Choice[]).map((choice) => (
           <div
             key={choice}
-            className={`choice-mini${selected === choice ? " selected" : ""}`}
+            className={`choice-mini${selected === choice ? " selected" : ""}${isThinking ? " disabled" : ""}`}
             data-choice={choice}
             title={labels[choice]}
-            onClick={() => onSelectChoice(choice)}
+            onClick={() => {
+              if (isThinking) {
+                return;
+              }
+              onSelectChoice(choice);
+            }}
           >
             {glyphs[choice]}
           </div>
@@ -89,7 +95,7 @@ function renderLastRoundCell(
 export default function PlayersTable({
   players,
   selected,
-  isResolvingRound,
+  isThinking,
   gameOver,
   championId,
   lastRoundChoices,
@@ -98,7 +104,7 @@ export default function PlayersTable({
 }: PlayersTableProps) {
   const userPlayer = players.find((player) => player.id === "user");
   const userActive = Boolean(userPlayer?.active);
-  const playDisabled = gameOver ? false : isResolvingRound || (userActive && !selected);
+  const playDisabled = gameOver ? false : isThinking || (userActive && !selected);
 
   return (
     <div className="game-column">
@@ -121,7 +127,7 @@ export default function PlayersTable({
 
         {players.map((player) => (
           <div key={`live-${player.id}`} className="row-cell live-cell">
-            {renderLiveCell(player, selected, gameOver, championId, onSelectChoice)}
+            {renderLiveCell(player, selected, isThinking, gameOver, championId, onSelectChoice)}
           </div>
         ))}
 
@@ -134,7 +140,7 @@ export default function PlayersTable({
 
       <div className="cta-wrap">
         <button className={`cta${gameOver ? " champion-btn" : ""}`} onClick={onPlayRound} disabled={playDisabled}>
-          {gameOver ? "New Tournament" : "Play Round"}
+          {gameOver ? "New Tournament" : isThinking ? "Thinking..." : "Play Round"}
         </button>
       </div>
     </div>

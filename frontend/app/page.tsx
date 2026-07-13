@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import HistoryPanel from "@/components/HistoryPanel";
 import OpponentsPanel from "@/components/OpponentsPanel";
@@ -36,6 +36,8 @@ const INITIAL_CHECKED_OPPONENTS: CheckedOpponents = {
 };
 
 export default function Home() {
+  const gameGenerationRef = useRef(0);
+  const isResolvingRoundRef = useRef(false);
   const [checkedOpponents, setCheckedOpponents] =
     useState<CheckedOpponents>(INITIAL_CHECKED_OPPONENTS);
   const [players, setPlayers] = useState<PlayerState[]>(() =>
@@ -61,6 +63,10 @@ export default function Home() {
   }, [history]);
 
   const initTournament = (nextCheckedOpponents: CheckedOpponents) => {
+    gameGenerationRef.current += 1;
+    isResolvingRoundRef.current = false;
+    setIsResolvingRound(false);
+
     const nextTournamentNum = tournamentNum + 1;
     setPlayers(createTournamentPlayers(nextCheckedOpponents));
     setRoundNum(0);
@@ -73,6 +79,10 @@ export default function Home() {
   };
 
   const handleToggleOpponent = (id: OpponentId) => {
+    if (isResolvingRoundRef.current) {
+      return;
+    }
+
     const activeCount = OPPONENT_IDS.filter((opponentId) => checkedOpponents[opponentId]).length;
     if (checkedOpponents[id] && activeCount <= 1) {
       return;
@@ -88,7 +98,7 @@ export default function Home() {
   };
 
   const handlePlayRound = async () => {
-    if (isResolvingRound) {
+    if (isResolvingRoundRef.current) {
       return;
     }
 
@@ -103,11 +113,17 @@ export default function Home() {
       return;
     }
 
+    const requestGeneration = gameGenerationRef.current;
+    isResolvingRoundRef.current = true;
     setIsResolvingRound(true);
     try {
       const choices: Record<string, Choice> = {};
       const historyText = getFullSessionHistoryText(history);
       const aiChoices = await fetchAIMoves(activePlayers, historyText);
+
+      if (requestGeneration !== gameGenerationRef.current) {
+        return;
+      }
 
       activePlayers.forEach((player) => {
         if (player.human) {
@@ -140,7 +156,10 @@ export default function Home() {
       setChampion(output.champion);
       setSelected(null);
     } finally {
-      setIsResolvingRound(false);
+      if (requestGeneration === gameGenerationRef.current) {
+        isResolvingRoundRef.current = false;
+        setIsResolvingRound(false);
+      }
     }
   };
 
@@ -174,7 +193,11 @@ export default function Home() {
 
       <div className="divider-rule" />
 
-      <OpponentsPanel checkedOpponents={checkedOpponents} onToggleOpponent={handleToggleOpponent} />
+      <OpponentsPanel
+        checkedOpponents={checkedOpponents}
+        isLocked={isResolvingRound}
+        onToggleOpponent={handleToggleOpponent}
+      />
 
       <div className="divider-rule" />
 
@@ -182,10 +205,10 @@ export default function Home() {
         <PlayersTable
           players={players}
           selected={selected}
-          isResolvingRound={isResolvingRound}
           gameOver={gameOver}
           championId={champion?.id ?? null}
           lastRoundChoices={lastRoundChoices}
+          isThinking={isResolvingRound}
           onSelectChoice={setSelected}
           onPlayRound={handlePlayRound}
         />

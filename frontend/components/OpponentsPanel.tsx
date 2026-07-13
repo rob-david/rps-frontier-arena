@@ -2,10 +2,11 @@ import { OPPONENT_IDS, PLAYER_DEFS, type CheckedOpponents, type OpponentId } fro
 
 interface OpponentsPanelProps {
   checkedOpponents: CheckedOpponents;
+  isLocked: boolean;
   onToggleOpponent: (id: OpponentId) => void;
 }
 
-export default function OpponentsPanel({ checkedOpponents, onToggleOpponent }: OpponentsPanelProps) {
+export default function OpponentsPanel({ checkedOpponents, isLocked, onToggleOpponent }: OpponentsPanelProps) {
   return (
     <div className="opponents-panel">
       <div className="opponents-title">Opponents</div>
@@ -20,11 +21,15 @@ export default function OpponentsPanel({ checkedOpponents, onToggleOpponent }: O
           return (
             <label
               key={id}
-              className={`opp-toggle ${id}${isChecked ? " checked" : ""}`}
+              className={`opp-toggle ${id}${isChecked ? " checked" : ""}${isLocked ? " locked" : ""}`}
               onClick={(event) => {
                 event.preventDefault();
+                if (isLocked) {
+                  return;
+                }
                 onToggleOpponent(id);
               }}
+              aria-disabled={isLocked}
             >
               <input type="checkbox" checked={isChecked} readOnly />
               <span className="box">{isChecked ? "✓" : ""}</span>
