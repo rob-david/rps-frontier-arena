@@ -9,3 +9,4 @@
 - Part 8: Added multi-stage Docker packaging (`Dockerfile`) and verified containerized `/api/ai-move` runtime works with keys supplied through `--env-file`.
 - Part 8: Confirmed no secrets are baked into the image (no `/app/.env` in container and image env contains only non-secret defaults such as `PORT`).
 - Part 8: Loaded root `.env` in `backend/main.py` so local `scripts/start.sh` and `scripts/start.ps1` runs receive provider keys without manual shell export.
+- Follow-up: Empirically re-tested Google wrapper behavior with a single `ThinkingLevel.MINIMAL` call to `gemini-3.1-pro-preview`; it returned `400 INVALID_ARGUMENT` ("Thinking level MINIMAL is not supported for this model"), confirming the existing multi-config retry fallback is necessary.
