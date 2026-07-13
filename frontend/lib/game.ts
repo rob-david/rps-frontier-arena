@@ -130,20 +130,8 @@ export function resolveRound(choices: Record<string, Choice>): RoundResolution {
     return { tie: false, eliminatedIds };
   }
 
-  const counts: Record<string, number> = {};
-  types.forEach((type) => {
-    counts[type] = (counts[type] || 0) + 1;
-  });
-
-  const maxCount = Math.max(...Object.values(counts));
-  const top = Object.keys(counts).filter((type) => counts[type] === maxCount);
-  if (top.length !== 1) {
-    return { tie: true };
-  }
-
-  const majority = top[0] as Choice;
-  const eliminatedIds = Object.keys(choices).filter((id) => choices[id] !== majority) as PlayerId[];
-  return { tie: false, eliminatedIds };
+  // With all 3 symbols present, no fair winner can be declared in one step.
+  return { tie: true };
 }
 
 export function pickRandomChoice(randomFn: () => number = Math.random): Choice {
