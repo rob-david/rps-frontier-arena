@@ -143,4 +143,4 @@ The result: an implementation that can be audited against its own specification,
 
 ## License
 
-MIT
+This is free and unencumbered software released into the public domain — see [Unlicense](https://unlicense.org/) for details.
