@@ -38,7 +38,7 @@ No database. No user accounts. Everything lives in the browser's session state a
 ## Getting started
 
 ```bash
-git clone https://github.com/<your-username>/rps-frontier-arena.git
+git clone https://github.com/rob-david/rps-frontier-arena.git
 cd rps-frontier-arena
 
 cp docs/.env.example .env
