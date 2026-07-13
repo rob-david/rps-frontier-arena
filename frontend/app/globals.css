@@ -193,6 +193,15 @@ h1 span.accent{ color:var(--player); }
 .mini-badge.dash{ color:var(--muted); font-size:13px; }
 .mini-badge.wait{ color:var(--muted); opacity:0.55; font-size:15px; border:1.5px dashed var(--line); }
 .mini-badge.champ{ font-size:19px; }
+.mini-badge.filled{ background:var(--bg-panel); border:1.5px solid var(--line); }
+.mini-badge.out-hit{ opacity:0.45; filter:grayscale(0.4); border-color:var(--eliminated); }
+
+.last-round-cell{ opacity:0.88; }
+.round-tag{
+  position:absolute; top:4px; left:6px;
+  font-family:'JetBrains Mono', monospace; font-size:8px; letter-spacing:0.04em;
+  color:var(--muted); opacity:0.75;
+}
 
 .side-name{
   font-family:'Chakra Petch', sans-serif; font-weight:600; font-size:14px;
@@ -290,4 +299,5 @@ footer.note{
   .mini-choices{ gap:3px; }
   .head-cell{ padding:8px 3px; min-height:50px; }
   .row-cell{ min-height:38px; }
+  .round-tag{ font-size:7px; top:2px; left:3px; }
 }

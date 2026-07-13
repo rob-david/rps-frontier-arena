@@ -15,7 +15,9 @@ import {
   DEFAULT_CHECKED_OPPONENTS,
   fetchAIMoves,
   getFullSessionHistoryText,
+  type LastRoundChoices,
   OPPONENT_IDS,
+  resolveRound,
   type CheckedOpponents,
   type Choice,
   type OpponentId,
@@ -46,6 +48,7 @@ export default function Home() {
   const [gameOver, setGameOver] = useState(false);
   const [champion, setChampion] = useState<PlayerState | null>(null);
   const [scores, setScores] = useState(createInitialScores);
+  const [lastRoundChoices, setLastRoundChoices] = useState<LastRoundChoices | null>(null);
   const [history, setHistory] = useState<TournamentHistory[]>(() =>
     appendTournamentHeading([], 1),
   );
@@ -64,6 +67,7 @@ export default function Home() {
     setSelected(null);
     setGameOver(false);
     setChampion(null);
+    setLastRoundChoices(null);
     setTournamentNum(nextTournamentNum);
     setHistory((prevHistory) => appendTournamentHeading(prevHistory, nextTournamentNum));
   };
@@ -114,6 +118,13 @@ export default function Home() {
       });
 
       const nextRoundNum = roundNum + 1;
+      const resolution = resolveRound(choices);
+      setLastRoundChoices({
+        roundNum: nextRoundNum,
+        choices: { ...choices },
+        eliminatedIds: resolution.tie ? [] : [...(resolution.eliminatedIds || [])],
+      });
+
       const output = applyRound({
         players,
         scores,
@@ -174,6 +185,7 @@ export default function Home() {
           isResolvingRound={isResolvingRound}
           gameOver={gameOver}
           championId={champion?.id ?? null}
+          lastRoundChoices={lastRoundChoices}
           onSelectChoice={setSelected}
           onPlayRound={handlePlayRound}
         />

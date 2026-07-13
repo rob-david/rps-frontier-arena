@@ -41,6 +41,12 @@ export interface RoundResolution {
   eliminatedIds?: PlayerId[];
 }
 
+export interface LastRoundChoices {
+  roundNum: number;
+  choices: Partial<Record<PlayerId, Choice>>;
+  eliminatedIds: PlayerId[];
+}
+
 export interface RoundApplyInput {
   players: PlayerState[];
   scores: ScoreMap;

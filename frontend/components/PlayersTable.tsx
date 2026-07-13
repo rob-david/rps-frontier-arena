@@ -1,4 +1,4 @@
-import { glyphs, labels, type Choice, type PlayerState } from "@/lib/game";
+import { glyphs, labels, type Choice, type LastRoundChoices, type PlayerState } from "@/lib/game";
 
 interface PlayersTableProps {
   players: PlayerState[];
@@ -6,6 +6,7 @@ interface PlayersTableProps {
   isResolvingRound: boolean;
   gameOver: boolean;
   championId: string | null;
+  lastRoundChoices: LastRoundChoices | null;
   onSelectChoice: (choice: Choice) => void;
   onPlayRound: () => void;
 }
@@ -49,12 +50,49 @@ function renderLiveCell(
   return <div className="mini-badge wait">?</div>;
 }
 
+function renderLastRoundCell(
+  player: PlayerState,
+  columnIndex: number,
+  lastRoundChoices: LastRoundChoices | null,
+) {
+  const tag =
+    columnIndex === 0 && lastRoundChoices ? <div className="round-tag">R{lastRoundChoices.roundNum}</div> : null;
+
+  if (!lastRoundChoices) {
+    return (
+      <>
+        {tag}
+        <div className="mini-badge dash">—</div>
+      </>
+    );
+  }
+
+  const choice = lastRoundChoices.choices[player.id];
+  if (!choice) {
+    return (
+      <>
+        {tag}
+        <div className="mini-badge dash">—</div>
+      </>
+    );
+  }
+
+  const wasEliminated = lastRoundChoices.eliminatedIds.includes(player.id);
+  return (
+    <>
+      {tag}
+      <div className={`mini-badge filled${wasEliminated ? " out-hit" : ""}`}>{glyphs[choice]}</div>
+    </>
+  );
+}
+
 export default function PlayersTable({
   players,
   selected,
   isResolvingRound,
   gameOver,
   championId,
+  lastRoundChoices,
   onSelectChoice,
   onPlayRound,
 }: PlayersTableProps) {
@@ -84,6 +122,12 @@ export default function PlayersTable({
         {players.map((player) => (
           <div key={`live-${player.id}`} className="row-cell live-cell">
             {renderLiveCell(player, selected, gameOver, championId, onSelectChoice)}
+          </div>
+        ))}
+
+        {players.map((player, index) => (
+          <div key={`last-round-${player.id}`} className="row-cell last-round-cell">
+            {renderLastRoundCell(player, index, lastRoundChoices)}
           </div>
         ))}
       </div>
