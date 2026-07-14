@@ -44,7 +44,7 @@ class AIMoveResponse(BaseModel):
 
 
 class NotifyRequest(BaseModel):
-  event: Literal["app_opened"]
+  event: Literal["app_opened", "first_round_played"]
 
 
 class NotifyResponse(BaseModel):
@@ -135,7 +135,11 @@ def notify(payload: NotifyRequest) -> NotifyResponse:
   if not token or not user:
     return NotifyResponse(notified=False)
 
-  push("RPS Frontier Arena: someone opened the app")
+  messages = {
+    "app_opened": "RPS Frontier Arena: someone opened the app",
+    "first_round_played": "RPS Frontier Arena: someone started playing",
+  }
+  push(messages[payload.event])
   return NotifyResponse(notified=True)
 
 

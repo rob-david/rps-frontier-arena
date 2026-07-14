@@ -39,6 +39,7 @@ let didNotifyAppOpened = false;
 export default function Home() {
   const gameGenerationRef = useRef(0);
   const isResolvingRoundRef = useRef(false);
+  const didNotifyFirstRoundPlayedRef = useRef(false);
   const [checkedOpponents, setCheckedOpponents] =
     useState<CheckedOpponents>(INITIAL_CHECKED_OPPONENTS);
   const [players, setPlayers] = useState<PlayerState[]>(() =>
@@ -129,6 +130,19 @@ export default function Home() {
     const userPlayer = activePlayers.find((player) => player.id === "user");
     if (userPlayer && !selected) {
       return;
+    }
+
+    if (!didNotifyFirstRoundPlayedRef.current) {
+      didNotifyFirstRoundPlayedRef.current = true;
+      void fetch("/api/notify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ event: "first_round_played" }),
+      }).catch(() => {
+        // Notification is best-effort and must never impact gameplay UX.
+      });
     }
 
     const requestGeneration = gameGenerationRef.current;
