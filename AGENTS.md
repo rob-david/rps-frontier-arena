@@ -20,6 +20,7 @@ This project is a Rock-Paper-Scissors tournament web app. Key features:
 - A scoreboard that persists across tournaments within the current browser session: +1 point per round survived (including ties, where everyone survives), +2 bonus points for winning a tournament. "New Tournament" keeps the scoreboard; a full page reload does not (see Limitations)
 - The main table shows player columns side by side, always in a row (never stacked, even on mobile), and stays a single fixed row — the live/current round only (interactive choice for the human, "?" waiting badge for AI). It never grows with more rounds or tournaments, so the "Play Round" button always stays directly beneath it, fully visible without scrolling
 - A separate sidebar panel (fixed height, its own internal scroll) shows the full session history as readable commentary text, grouped by tournament heading, newest tournament on top. This is the only place round-by-round history is displayed — it keeps growing across tournaments and is never cleared until reload
+- Optional push notifications (via Pushover) fire for three events during a session: the app being opened, the human player starting their first round, and a tournament reaching a champion (once per completed tournament — a session can trigger this multiple times if the user plays several tournaments). These are best-effort side effects — a failed, slow, or misconfigured notification must never block gameplay, delay the AI move flow, or surface an error to the user
 
 ## Limitations
 
@@ -110,6 +111,34 @@ Notes:
 - xAI's API is OpenAI-compatible; when constructing the `openai` SDK client for Elon's provider wrapper, point `base_url` at xAI's endpoint and pass `GROK_API_KEY` as the API key
 - These 4 variables go in `.env` locally (never committed) — read via `os.environ`
 
+## Push Notifications (optional, via Pushover)
+
+Two more variables in `.env`, unlike the 4 provider keys these are **optional**:
+
+| Variable | Meaning |
+|---|---|
+| `PUSHOVER_TOKEN` | Pushover application token |
+| `PUSHOVER_USER` | Pushover user/group key |
+
+If either is missing, notifications are silently skipped — the app must behave identically with or without them, no error, no degraded gameplay. This mirrors the `try/except`-wrapped `push()` pattern already used in the developer's other Pushover-based project: a failed HTTP call to Pushover is logged and swallowed, never raised.
+
+**New endpoint: `POST /api/notify`**
+
+Request body:
+```json
+{ "event": "app_opened" | "first_round_played" | "tournament_champion", "champion_id": "user" | "sam" | "claude" | "elon" | "sergey" }
+```
+`champion_id` is required only when `event` is `"tournament_champion"`; omitted otherwise.
+
+The backend — not the client — owns the actual Pushover message text. `champion_id` is a bounded enum (same shape as `AIPlayerId` plus `"user"`), mapped server-side to a display name (`"You"`, `"Sam"`, `"Claude"`, `"Elon"`, `"Sergey"`) to compose the message. The client never supplies free-form text that ends up in a push notification — same defensive-input posture as the rest of the API.
+
+Response is minimal (e.g. `{"notified": true}`) — this is a fire-and-forget call from the frontend's perspective and must never be awaited in a way that blocks or delays gameplay, the "Thinking..." state, or the champion UI reveal.
+
+**When each event fires (frontend-side, in-memory only — no database, consistent with the rest of the app):**
+- `app_opened` — once per full page load, on mount
+- `first_round_played` — once per full page load, the very first time the human clicks "Play Round" (not once per tournament — clicking "New Tournament" does not refire this)
+- `tournament_champion` — every time a tournament concludes; a session can trigger this multiple times if several tournaments are played
+
 ## Model Configuration — kept OUT of Python code
 
 Model IDs are a known moving target (deprecations happen with little notice — confirmed already with `grok-3-mini` being retired). To change which model any player uses, nobody should have to touch Python code — they should only need to edit one config file.
@@ -188,7 +217,8 @@ rps-frontier-arena/
 │
 ├── backend/                     # [you create]
 │   ├── AGENTS.md                # [you create] running implementation log for backend/
-│   ├── main.py                  # FastAPI app: serves frontend/out/, exposes /api/ai-move
+│   ├── main.py                  # FastAPI app: serves frontend/out/, exposes /api/ai-move, /api/notify
+│   ├── notifications.py         # optional Pushover push() helper, fails silently
 │   └── providers/
 │       ├── openai_provider.py
 │       ├── anthropic_provider.py
