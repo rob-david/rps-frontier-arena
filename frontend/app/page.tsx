@@ -180,6 +180,21 @@ export default function Home() {
         roundNumber: nextRoundNum,
       });
 
+      if (output.gameOver && output.champion) {
+        void fetch("/api/notify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            event: "tournament_champion",
+            champion_id: output.champion.id,
+          }),
+        }).catch(() => {
+          // Notification is best-effort and must never impact gameplay UX.
+        });
+      }
+
       setRoundNum(nextRoundNum);
       setPlayers(output.players);
       setScores(output.scores);

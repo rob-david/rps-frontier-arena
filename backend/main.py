@@ -26,6 +26,8 @@ load_dotenv(BASE_DIR / ".env")
 
 Choice = Literal["kamen", "nuzky", "papir"]
 AIPlayerId = Literal["sam", "claude", "elon", "sergey"]
+NotifyEvent = Literal["app_opened", "first_round_played", "tournament_champion"]
+NotifyChampionId = Literal["user", "sam", "claude", "elon", "sergey"]
 
 
 class AIPlayerConfig(BaseModel):
@@ -44,7 +46,8 @@ class AIMoveResponse(BaseModel):
 
 
 class NotifyRequest(BaseModel):
-  event: Literal["app_opened", "first_round_played"]
+  event: NotifyEvent
+  champion_id: NotifyChampionId | None = None
 
 
 class NotifyResponse(BaseModel):
@@ -129,17 +132,34 @@ def ai_move(payload: AIMoveRequest) -> AIMoveResponse:
 
 @app.post("/api/notify", response_model=NotifyResponse)
 def notify(payload: NotifyRequest) -> NotifyResponse:
+  if payload.event == "tournament_champion" and not payload.champion_id:
+    raise HTTPException(
+      status_code=400,
+      detail="champion_id is required when event is tournament_champion",
+    )
+
+  champion_names = {
+    "user": "You",
+    "sam": "Sam",
+    "claude": "Claude",
+    "elon": "Elon",
+    "sergey": "Sergey",
+  }
+
+  if payload.event == "tournament_champion":
+    message = f"RPS Frontier Arena: tournament champion is {champion_names[payload.champion_id]}"
+  elif payload.event == "first_round_played":
+    message = "RPS Frontier Arena: someone started playing"
+  else:
+    message = "RPS Frontier Arena: someone opened the app"
+
   # Keep notification as a best-effort side effect: never fail the request for env/network issues.
   token = os.getenv("PUSHOVER_TOKEN")
   user = os.getenv("PUSHOVER_USER")
   if not token or not user:
     return NotifyResponse(notified=False)
 
-  messages = {
-    "app_opened": "RPS Frontier Arena: someone opened the app",
-    "first_round_played": "RPS Frontier Arena: someone started playing",
-  }
-  push(messages[payload.event])
+  push(message)
   return NotifyResponse(notified=True)
 
 
