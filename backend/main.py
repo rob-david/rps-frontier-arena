@@ -10,6 +10,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from backend.notifications import push
 from backend.providers.anthropic_provider import get_move as anthropic_get_move
 from backend.providers.google_provider import get_move as google_get_move
 from backend.providers.openai_provider import get_move as openai_get_move
@@ -40,6 +41,14 @@ class AIMoveRequest(BaseModel):
 
 class AIMoveResponse(BaseModel):
   choice: Choice
+
+
+class NotifyRequest(BaseModel):
+  event: Literal["app_opened"]
+
+
+class NotifyResponse(BaseModel):
+  notified: bool
 
 
 def _load_models_config() -> dict[str, AIPlayerConfig]:
@@ -116,6 +125,18 @@ def ai_move(payload: AIMoveRequest) -> AIMoveResponse:
     choice = random.choice(RANDOM_CHOICES)
 
   return AIMoveResponse(choice=choice)
+
+
+@app.post("/api/notify", response_model=NotifyResponse)
+def notify(payload: NotifyRequest) -> NotifyResponse:
+  # Keep notification as a best-effort side effect: never fail the request for env/network issues.
+  token = os.getenv("PUSHOVER_TOKEN")
+  user = os.getenv("PUSHOVER_USER")
+  if not token or not user:
+    return NotifyResponse(notified=False)
+
+  push("RPS Frontier Arena: someone opened the app")
+  return NotifyResponse(notified=True)
 
 
 app.mount("/", StaticFiles(directory=str(_resolve_static_dir()), html=True), name="frontend")

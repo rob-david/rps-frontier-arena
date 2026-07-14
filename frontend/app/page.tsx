@@ -34,6 +34,7 @@ declare global {
 const INITIAL_CHECKED_OPPONENTS: CheckedOpponents = {
   ...DEFAULT_CHECKED_OPPONENTS,
 };
+let didNotifyAppOpened = false;
 
 export default function Home() {
   const gameGenerationRef = useRef(0);
@@ -61,6 +62,23 @@ export default function Home() {
       delete window.getFullSessionHistoryText;
     };
   }, [history]);
+
+  useEffect(() => {
+    if (didNotifyAppOpened) {
+      return;
+    }
+    didNotifyAppOpened = true;
+
+    void fetch("/api/notify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ event: "app_opened" }),
+    }).catch(() => {
+      // Notification is best-effort and must never impact gameplay UX.
+    });
+  }, []);
 
   const initTournament = (nextCheckedOpponents: CheckedOpponents) => {
     gameGenerationRef.current += 1;
